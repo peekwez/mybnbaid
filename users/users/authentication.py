@@ -98,7 +98,7 @@ def reset_password(store, token, password):
 
     # is password blacklisted?
     params = (("user_id",), (user_id,))
-    black = store.filter(_schema, 'blacklists', params)
+    black = store.filter(_schema, 'blacklists', params)['items']
     if black:
         passwords = black[0]['passwords']
         if data['password'] & passwords:
