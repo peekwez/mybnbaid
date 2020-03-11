@@ -30,7 +30,7 @@ def encrypt(password, salt=None):
 
 def login(user, password):
     reset_password = user.get('reset_password', None)
-    if reset_password and reset_passsword == True:
+    if reset_password and reset_password == True:
         raise exc.ResetPassword('password reset required')
 
     disabled = user.get('disabled', None)

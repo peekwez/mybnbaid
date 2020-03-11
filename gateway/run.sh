@@ -1,2 +1,2 @@
 #!/bin/bash
-mybnbaid.gateway
+mybnbaid.gateway port=8888

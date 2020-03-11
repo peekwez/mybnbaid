@@ -1,3 +1,7 @@
+class BadRequest(Exception):
+    pass
+
+
 class MissingHeader(Exception):
     pass
 

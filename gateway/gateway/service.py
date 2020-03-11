@@ -52,39 +52,45 @@ define('port', default=8888, help='port to listen')
 class GatewayHandler(web.RequestHandler):
     _addr = None
     _msg = rk.msg.Client(b'mpack')
-    _user_id = None
+    data = None
 
     def initialize(self, auth=False):
         self._auth = auth
 
-    def write_error(err):
+    def reply_error(self, err):
         res = rk.utils.error(err)
         self.write(rk.msg.dumps(res))
         self.set_header('Content-Type', 'application/json')
+        self.finish()
 
     def prepare(self):
+
+        if self.request.headers.get('Content-Type', '').startswith('application/json'):
+            try:
+                self.data = rk.msg.loads(self.request.body)
+            except rk.msg.json.decoder.JSONDecodeError:
+                self.data = {}
+
         if self._auth == True:
 
             # is header present
             try:
                 header = get_header(self.request)
             except Exception as err:
-                self.write_error(err)
-                return
+                self.reply_error(err)
 
             # is token in proper format
             try:
                 token = get_token(header)
             except Exception as err:
-                self.write_error(err)
-                return
+                self.reply_error(err)
 
             # is token valid
             try:
-                user_id = _token.verify('LOGIN', token, ttls=2800)
+                user_id = _token.verify('LOGIN', token, ttl=10000)
+                self.data.update({'user_id': user_id})
             except Exception as err:
-                self.write_error(err)
-                return
+                self.reply_error(err)
 
             # is user logged in :: session
 
@@ -92,13 +98,9 @@ class GatewayHandler(web.RequestHandler):
     def uri(self):
         return self.request.uri
 
-    @property
-    def body(self):
-        return rk.msg.loads(self.request.body)
-
     @gen.coroutine
     def post(self):
-        req = rk.utils.prep(method=self.uri, args=self.body)
+        req = rk.utils.prep(method=self.uri, args=self.data)
         ctx = Context()
         sock = ctx.socket(zmq.DEALER)
         sock.connect(self._addr)
@@ -134,8 +136,7 @@ def main():
         (r'/users.auth.requestVerifyEmail', UserHandler, dict(auth=True)),
         (r'/users.auth.setEmailVerified', UserHandler),  # body has token
         (r'/users.auth.requestPasswordReset', UserHandler),
-        (r'/users.auth.setPassword', UserHandler),  # body has token
-        (r'/users.setPhoneNumber', UserHandler, dict(auth=True)),
+        (r'/users.auth.setPassword', UserHandler)  # body has token
     ]
     app = web.Application(handlers)
     app.listen(options.port)

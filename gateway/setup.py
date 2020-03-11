@@ -12,7 +12,7 @@ setup(
     install_requires=[
         'rock==0.0.1',
         'pyzmq==18.1.0',
-        'tornado==6.0.3'
+        'tornado==6.0.3',
         "pymemcache==2.2.2",
     ],
     include_package_data=True,

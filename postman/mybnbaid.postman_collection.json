@@ -1,0 +1,688 @@
+{
+	"info": {
+		"_postman_id": "a63845b2-0f9c-47e5-b6ca-c068aaa68838",
+		"name": "mybnbaid",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "users",
+			"item": [
+				{
+					"name": "users.create",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "007e66e7-192e-42ad-b1fe-5aa13cbb0b72",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									"",
+									"// check body fields",
+									"pm.test(\"response should have token\", function() {",
+									"    typeof(data.token) === \"string\"",
+									"})",
+									"pm.globals.set(\"token\", data.token)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"kwesiparry@gmail.com\",\n\t\"password\": \"tbee4real\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.create",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.setName",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"first_name\": \"Kwesi Parry\",\n\t\"last_name\": \"Apponsah\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.setName",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.setName"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.setPhoneNumber",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"phone_number\": \"+16477044815\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.setPhoneNumber",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.setPhoneNumber"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.address.create",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d1d837d-3f98-4094-ba91-cc622349cb4f",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									"",
+									"//pm.globals.set(\"addr_id\", data.id)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"street\": \"5 Yarrow Lane\",\n\t\"city\": \"East Gwillimbury\",\n\t\"postcode\": \"L9N0T4\",\n\t\"country\": \"Canada\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.address.create",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.address.create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.address.update",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d1d837d-3f98-4094-ba91-cc622349cb4f",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"addr_id\": {{addr_id}},\n\t\"street\": \"2874 Keele Street\",\n\t\"city\": \"North York\",\n\t\"postcode\": \"M3M3C4\",\n\t\"country\": \"Canada\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.address.update",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.address.update"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.address.list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d1d837d-3f98-4094-ba91-cc622349cb4f",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.address.list",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.address.list"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.address.delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d1d837d-3f98-4094-ba91-cc622349cb4f",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"addr_id\": {{addr_id}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.address.delete",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.address.delete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.auth.login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d1d837d-3f98-4094-ba91-cc622349cb4f",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									"",
+									"pm.globals.set('token',data.token)",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"kwesiparry@gmail.com\",\n\t\"password\": \"tbee4real\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.auth.login",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.auth.login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.auth.requestVerifyEmail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d1d837d-3f98-4094-ba91-cc622349cb4f",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.auth.requestVerifyEmail",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.auth.requestVerifyEmail"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.auth.setEmailVerified",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d1d837d-3f98-4094-ba91-cc622349cb4f",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"token\": \"{{token}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.auth.setEmailVerified",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.auth.setEmailVerified"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.auth.requestPasswordReset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d1d837d-3f98-4094-ba91-cc622349cb4f",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"kwesiparry@gmail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.auth.requestPasswordReset",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.auth.requestPasswordReset"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "users.auth.setPassword",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0d1d837d-3f98-4094-ba91-cc622349cb4f",
+								"exec": [
+									"var data = pm.response.json()",
+									"",
+									"//check status code",
+									"pm.test(\"received response\", function (){",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"//check status code",
+									"pm.test(\"response is ok\", function (){",
+									"    data.ok === true;",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"token\": \"{{token}}\",\n\t\"password\": \"tbee4real\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{api_url}}/users.auth.setPassword",
+							"protocol": "http",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"users.auth.setPassword"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "endpoints for testing users service",
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
