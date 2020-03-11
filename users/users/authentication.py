@@ -94,7 +94,7 @@ def reset_password(store, token, password):
         raise exc.PasswordUsed('password has already been used')
 
     # encrypt password
-    data = _passwd.encrypt(user['salt'], password)
+    data = _passwd.encrypt(password, user['salt'])
 
     # is password blacklisted?
     params = (("user_id",), (user_id,))
