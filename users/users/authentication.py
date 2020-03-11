@@ -101,7 +101,7 @@ def reset_password(store, token, password):
     black = store.filter(_schema, 'blacklists', params)['items']
     if black:
         passwords = black[0]['passwords']
-        if data['password'] & passwords:
+        if {data['password']} & passwords:
             raise exc.PasswordUsed('password has already been used')
         pk = black[0]['id']
         passwords.add(user['password'])
