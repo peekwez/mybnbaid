@@ -19,3 +19,4 @@ __pycache__/*
 
 dependencies
 *.key*
+secrets
