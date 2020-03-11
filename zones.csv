@@ -1,0 +1,260 @@
+area,fsa,zone
+Barrie,L4M,City of Barrie
+Barrie,L4N,City of Barrie
+Barrie,L9J,City of Barrie
+Hamilton,L8E,City of Hamilton
+Hamilton,L8G,City of Hamilton
+Hamilton,L8H,City of Hamilton
+Hamilton,L8J,City of Hamilton
+Hamilton,L8K,City of Hamilton
+Hamilton,L8L,City of Hamilton
+Hamilton,L8M,City of Hamilton
+Hamilton,L8N,City of Hamilton
+Hamilton,L8P,City of Hamilton
+Hamilton,L8R,City of Hamilton
+Hamilton,L8S,City of Hamilton
+Hamilton,L8T,City of Hamilton
+Hamilton,L8V,City of Hamilton
+Hamilton,L8W,City of Hamilton
+Hamilton,L9A,City of Hamilton
+Hamilton,L9B,City of Hamilton
+Hamilton,L9C,City of Hamilton
+Ancaster,L9G,City of Hamilton
+Dundas,L9H,City of Hamilton
+Ancaster,L9K,City of Hamilton
+Scarborough,M1B,City of Toronto
+Scarborough,M1C,City of Toronto
+Scarborough,M1E,City of Toronto
+Scarborough,M1G,City of Toronto
+Scarborough,M1H,City of Toronto
+Scarborough,M1J,City of Toronto
+Scarborough,M1K,City of Toronto
+Scarborough,M1L,City of Toronto
+Scarborough,M1M,City of Toronto
+Scarborough,M1N,City of Toronto
+Scarborough,M1P,City of Toronto
+Scarborough,M1R,City of Toronto
+Scarborough,M1S,City of Toronto
+Scarborough,M1T,City of Toronto
+Scarborough,M1V,City of Toronto
+Scarborough,M1W,City of Toronto
+Scarborough,M1X,City of Toronto
+North York,M2H,City of Toronto
+North York,M2J,City of Toronto
+North York,M2K,City of Toronto
+North York,M2L,City of Toronto
+North York,M2M,City of Toronto
+North York,M2N,City of Toronto
+North York,M2P,City of Toronto
+North York,M2R,City of Toronto
+North York,M3A,City of Toronto
+North York,M3B,City of Toronto
+North York,M3C,City of Toronto
+North York,M3H,City of Toronto
+North York,M3J,City of Toronto
+North York,M3K,City of Toronto
+North York,M3L,City of Toronto
+North York,M3M,City of Toronto
+North York,M3N,City of Toronto
+North York,M4A,City of Toronto
+East York,M4B,City of Toronto
+East York,M4C,City of Toronto
+East Toronto,M4E,City of Toronto
+East York,M4G,City of Toronto
+East York,M4H,City of Toronto
+East York,M4J,City of Toronto
+East Toronto,M4K,City of Toronto
+East Toronto,M4L,City of Toronto
+East Toronto,M4M,City of Toronto
+Central Toronto,M4N,City of Toronto
+Central Toronto,M4P,City of Toronto
+Central Toronto,M4R,City of Toronto
+Central Toronto,M4S,City of Toronto
+Central Toronto,M4T,City of Toronto
+Central Toronto,M4V,City of Toronto
+Downtown Toronto,M4W,City of Toronto
+Downtown Toronto,M4X,City of Toronto
+Downtown Toronto,M4Y,City of Toronto
+Downtown Toronto,M5A,City of Toronto
+Downtown Toronto,M5B,City of Toronto
+Downtown Toronto,M5C,City of Toronto
+Downtown Toronto,M5E,City of Toronto
+Downtown Toronto,M5G,City of Toronto
+Downtown Toronto,M5H,City of Toronto
+Downtown Toronto,M5J,City of Toronto
+Downtown Toronto,M5K,City of Toronto
+Downtown Toronto,M5L,City of Toronto
+North York,M5M,City of Toronto
+Central Toronto,M5N,City of Toronto
+Central Toronto,M5P,City of Toronto
+Central Toronto,M5R,City of Toronto
+Downtown Toronto,M5S,City of Toronto
+Downtown Toronto,M5T,City of Toronto
+Downtown Toronto,M5V,City of Toronto
+Downtown Toronto,M5W,City of Toronto
+Downtown Toronto,M5X,City of Toronto
+North York,M6A,City of Toronto
+North York,M6B,City of Toronto
+York,M6C,City of Toronto
+York,M6E,City of Toronto
+Downtown Toronto,M6G,City of Toronto
+West Toronto,M6H,City of Toronto
+West Toronto,M6J,City of Toronto
+West Toronto,M6K,City of Toronto
+North York,M6L,City of Toronto
+York,M6M,City of Toronto
+York,M6N,City of Toronto
+West Toronto,M6P,City of Toronto
+West Toronto,M6R,City of Toronto
+West Toronto,M6S,City of Toronto
+Queen's Park,M7A,City of Toronto
+East Toronto,M7Y,City of Toronto
+Etobicoke,M8V,City of Toronto
+Etobicoke,M8W,City of Toronto
+Etobicoke,M8X,City of Toronto
+Etobicoke,M8Y,City of Toronto
+Etobicoke,M8Z,City of Toronto
+Etobicoke,M9A,City of Toronto
+Etobicoke,M9B,City of Toronto
+Etobicoke,M9C,City of Toronto
+North York,M9L,City of Toronto
+North York,M9M,City of Toronto
+York,M9N,City of Toronto
+Etobicoke,M9P,City of Toronto
+Etobicoke,M9R,City of Toronto
+Etobicoke,M9V,City of Toronto
+Etobicoke,M9W,City of Toronto
+Courtice,L1E,Clarington Municipality
+Peel/Dufferin Boundary West,L0N,Dufferin County
+Bradford,L3Z,Dufferin County
+Orangeville,L9V,Dufferin County
+Orangeville,L9W,Dufferin County
+East Durham Region,L0B,Durham Region
+West Durham Region,L0C,Durham Region
+York/Durham Boundary South,L0H,Durham Region
+Bowmanville,L1B,Durham Region
+Bowmanville,L1C,Durham Region
+Oshawa,L1G,Durham Region
+Oshawa,L1H,Durham Region
+Oshawa,L1J,Durham Region
+Oshawa,L1K,Durham Region
+Oshawa,L1L,Durham Region
+Whitby,L1M,Durham Region
+Whitby,L1N,Durham Region
+Whitby,L1P,Durham Region
+Whitby,L1R,Durham Region
+Ajax,L1S,Durham Region
+Ajax,L1T,Durham Region
+Pickering,L1V,Durham Region
+Pickering,L1W,Durham Region
+Pickering,L1X,Durham Region
+Pickering,L1Y,Durham Region
+Ajax,L1Z,Durham Region
+Uxbridge,L9P,Durham Region
+Halton Region / Halton/Peel Boundary North,L0P,Halton Region
+Oakville,L6H,Halton Region
+Oakville,L6J,Halton Region
+Oakville,L6K,Halton Region
+Oakville,L6L,Halton Region
+Oakville,L6M,Halton Region
+Georgetown,L7G,Halton Region
+Acton,L7J,Halton Region
+Burlington,L7L,Halton Region
+Burlington,L7M,Halton Region
+Burlington,L7N,Halton Region
+Burlington,L7P,Halton Region
+Burlington,L7R,Halton Region
+Burlington,L7S,Halton Region
+Burlington,L7T,Halton Region
+Milton,L9E,Halton Region
+Milton,L9T,Halton Region
+East Haldimand County / Northwest Niagara Region /,L0R,Niagara Region
+South and Northeast Niagara Region,L0S,Niagara Region
+Fort Erie,L2A,Niagara Region
+Niagara Falls,L2E,Niagara Region
+Niagara Falls,L2G,Niagara Region
+Niagara Falls,L2H,Niagara Region
+Niagara Falls,L2J,Niagara Region
+St. Catharines,L2M,Niagara Region
+St. Catharines,L2N,Niagara Region
+St. Catharines,L2P,Niagara Region
+St. Catharines,L2R,Niagara Region
+St. Catharines,L2S,Niagara Region
+St. Catharines,L2T,Niagara Region
+St. Catharines,L2V,Niagara Region
+St. Catharines,L2W,Niagara Region
+Welland,L3B,Niagara Region
+Welland,L3C,Niagara Region
+Grimsby,L3M,Niagara Region
+Springwater,L9X,Niagara Region
+Peel/York Boundary South,L0J,Peel Region
+Mississauga,L4T,Peel Region
+Mississauga,L4V,Peel Region
+Mississauga,L4W,Peel Region
+Mississauga,L4X,Peel Region
+Mississauga,L4Y,Peel Region
+Mississauga,L4Z,Peel Region
+Mississauga,L5A,Peel Region
+Mississauga,L5B,Peel Region
+Mississauga,L5C,Peel Region
+Mississauga,L5E,Peel Region
+Mississauga,L5G,Peel Region
+Mississauga,L5H,Peel Region
+Mississauga,L5J,Peel Region
+Mississauga,L5K,Peel Region
+Mississauga,L5L,Peel Region
+Mississauga,L5M,Peel Region
+Mississauga,L5N,Peel Region
+Mississauga,L5P,Peel Region
+Mississauga,L5R,Peel Region
+Mississauga,L5S,Peel Region
+Mississauga,L5T,Peel Region
+Mississauga,L5V,Peel Region
+Mississauga,L5W,Peel Region
+Brampton,L6P,Peel Region
+Brampton,L6R,Peel Region
+Brampton,L6S,Peel Region
+Brampton,L6T,Peel Region
+Brampton,L6V,Peel Region
+Brampton,L6W,Peel Region
+Brampton,L6X,Peel Region
+Brampton,L6Y,Peel Region
+Brampton,L6Z,Peel Region
+Brampton,L7A,Peel Region
+Caledon,L7C,Peel Region
+Bolton,L7E,Peel Region
+Caledon,L7K,Peel Region
+Mississauga,M7R,Peel Region
+Orillia,L3V,Simcoe County
+Midland,L4R,Simcoe County
+Penetanguishene,L9M,Simcoe County
+Alliston,L9R,Simcoe County
+Innisfil,L9S,Simcoe County
+Collingwood,L9Y,Town of Collingwood
+Wasaga Beach,L9Z,Town of Wasaga
+Waterdown,L8B,Waterdown
+Ontario Centre,L0G,York Region
+Markham,L3P,York Region
+Markham,L3R,York Region
+Markham,L3S,York Region
+Thornhill,L3T,York Region
+Newmarket,L3X,York Region
+Newmarket,L3Y,York Region
+Stouffville,L4A,York Region
+Richmond Hill,L4B,York Region
+Richmond Hill,L4C,York Region
+Richmond Hill,L4E,York Region
+Aurora,L4G,York Region
+Woodbridge,L4H,York Region
+Thornhill,L4J,York Region
+Concord,L4K,York Region
+Woodbridge,L4L,York Region
+Keswick,L4P,York Region
+Richmond Hill,L4S,York Region
+Maple,L6A,York Region
+Markham,L6B,York Region
+Markham,L6C,York Region
+Markham,L6E,York Region
+Markham,L6G,York Region
+King City,L7B,York Region
+East Gwillimbury,L9N,York Region
