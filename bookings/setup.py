@@ -2,18 +2,15 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='mybnbaid-gateway',
+    name='mybnbaid-bookings',
     version='0.0.1',
-    description='Mybnbaid gateway microservice',
+    description='Mybnbaid bookings microservice',
     packages=find_packages(exclude=['test', 'test.*']),
     entry_points={
-        'console_scripts': ['mybnbaid.gateway=gateway.service:main']
+        'console_scripts': ['mybnbaid.bookings=bookings.service:main']
     },
     install_requires=[
-        'rock==0.0.1',
-        'pyzmq==18.1.0',
-        'tornado==6.0.3',
-        "pymemcache==2.2.2",
+        'rock==0.0.1'
     ],
     include_package_data=True,
     extras_require={

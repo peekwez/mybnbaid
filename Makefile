@@ -3,6 +3,7 @@ PROJECT ?= mybnbaid
 ROOT ?= ${CURDIR}
 export
 
+NAME := xyz
 IMAGES := users
 SERVICE := users
 
@@ -10,6 +11,10 @@ build: build-images
 
 push: push-images
 
+init:
+	python sample/initsvc.py -d $(ROOT) -s $(NAME)
+	chmod a+x $(ROOT)/$(NAME)/run.sh
+	
 prune:
 	docker system prune
 
