@@ -14,5 +14,5 @@ class BadPassword(Exception):
     pass
 
 
-class UsedPassword(Exception):
+class PasswordUsed(Exception):
     pass

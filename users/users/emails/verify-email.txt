@@ -1,0 +1,8 @@
+Thanks for signing up for Mybnbaid We're excited to have you as a user.
+
+Verify Email {{action_url}}
+
+Thanks,
+
+The Mybnbaid Team
+Yarrow Lane, Holland Landing, ON L9N

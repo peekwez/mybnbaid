@@ -2,17 +2,18 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='mybnbaid-bookings',
+    name='mybnbaid-mail',
     version='0.0.1',
-    description='Mybnbaid bookings microservice',
+    description='Mybnbaid mail microservice',
     packages=find_packages(exclude=['test', 'test.*']),
     entry_points={
-        'console_scripts': ['mybnbaid.bookings=bookings.service:main']
+        'console_scripts': ['mybnbaid.mail=mail.service:main']
     },
     install_requires=[
-        'rock==0.0.1'
+        'rock==0.0.1',
+        'pyzmq==18.1.0',
+        'tornado==6.0.3'
     ],
-    include_package_data=True,
     extras_require={
         'dev': [
             'pytest==3.1.1',

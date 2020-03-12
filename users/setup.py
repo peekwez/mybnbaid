@@ -13,9 +13,9 @@ setup(
         'rock==0.0.1',
         'schemaless==0.0.1',
         'pyzmq==18.1.0',
-        'tornado==6.0.3'
+        'tornado==6.0.3',
     ],
-    include_package_data=True,
+    package_data={'users': ['emails/*']},
     extras_require={
         'dev': [
             'pytest==3.1.1',

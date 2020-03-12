@@ -9,16 +9,16 @@ from . import exceptions as exc
 from . import authentication as _auth
 
 # logging variables
-_log = rk.utils.logger('users.services', 'INFO')
+_log = rk.utils.logger('users.service', 'INFO')
 _url = 'https://api.mybnbaid.com'
 
 # message format
-_msg = rk.msg.Client(b'mpack')
+_proto = rk.msg.Client(b'mpack')
 
 # zmq variables
 _ctx = zmq.Context()
 _server = None
-_auth_producer = None
+_email_producer = None  # emails
 
 # datastore variables
 _store = None
@@ -33,18 +33,33 @@ _sensitive = ('id', 'password', 'salt', 'reset_password')
 
 
 def strip_sensitive(user, fields=_sensitive):
-    [user.pop(key) for key in fields]
+    [user.pop(key, None) for key in fields]
     return user
 
 
 def handler(message):
-    rk.utils.handle(rpc, _server, _msg, message, log=_log)
+    ibeg = rk.utils.time()
+    sid, req = rk.utils.unpack(_proto, message)
+    try:
+        func = rpc[req.method]
+        res = func(**req.args)
+    except Exception as err:
+        res = rk.utils.error(err)
+        _log.exception(err)
+    else:
+        res['ok'] = True
+    finally:
+        _proto.send(_server, res, sid)
+        iend = rk.utils.time()
+        elapsed = 1000*(iend-ibeg)
+        _log.info(f'{req.method} >> {func.__name__} {elapsed:0.2f}ms')
 
 
-def _setup(addr, dsn):
+def _setup(server_addr, db_addr, email_addr):
     global _server, _store
-    _server = rk.zkit.router(_ctx, addr, handler=handler)
-    _store = sm.client.PGClient(dsn)
+    _server = rk.zkit.router(_ctx, server_addr, handler=handler)
+    _email_producer = rk.zkit.producer(_ctx, email_addr)
+    _store = sm.client.PGClient(db_addr)
 
 
 def find_by_email(email):
@@ -142,8 +157,10 @@ def login_user(email, password):
 @rpc.register('/users.auth.requestVerifyEmail')
 def request_verify_email(user_id):
     user = _store.get(_schema, 'users', user_id)
-    passed = _auth.request_verify_email(user_id, user['email'])
-    return {'passed': True}
+    data = _auth.request_verify_email(user_id, user['email'])
+    token = data.pop('token')
+    #_proto.send(_email_producer, data)
+    return {'token': token}
 
 
 @rpc.register('/users.auth.setEmailVerified')
@@ -155,8 +172,10 @@ def set_email_verified(token):
 @rpc.register('/users.auth.requestPasswordReset')
 def request_password_reset(email):
     user = find_by_email(email)
-    passed = _auth.request_password_reset(_store, user['id'])
-    return {'passed': True}
+    data = _auth.request_password_reset(_store, user['id'])
+    token = data.pop('token')
+    #_proto.send(_email_producer, data)
+    return {'token': token}
 
 
 @rpc.register('/users.auth.setPassword')
@@ -165,9 +184,9 @@ def reset_password(token, password):
     return {'passed': True}
 
 
-def start(addr, dsn):
+def start(server_addr, db_addr, email_addr):
     _log.info('starting users service...')
-    _setup(addr, dsn)
+    _setup(server_addr, db_addr, email_addr)
     try:
         ioloop.IOLoop.current().start()
     except KeyboardInterrupt:
@@ -180,19 +199,28 @@ def main():
     parser = ArgumentParser()
 
     parser.add_argument(
-        '-ip', '--addr', dest='addr',
+        '-s', '--server_addr', dest='server_addr',
         help='service end point',
         default='tcp://127.0.0.1:5000'
     )
 
     parser.add_argument(
-        '-dsn', '--dsn', dest='dsn',
+        '-d', '--db_addr', dest='db_addr',
         help='database address',
         default='postgres://postgres:password@127.0.0.1:5433/users'
     )
 
+    parser.add_argument(
+        '-e', '--email_addr', dest='email_addr',
+        help='email producer address',
+        default='tcp://127.0.0.1:6001'
+    )
     options = parser.parse_args()
-    start(options.addr, options.dsn)
+    start(
+        options.server_addr,
+        options.db_addr,
+        options.email_addr
+    )
 
 
 if __name__ == "__main__":
