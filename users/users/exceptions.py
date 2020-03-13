@@ -6,6 +6,10 @@ class UserDisabled(Exception):
     pass
 
 
+class UserNotFound(Exception):
+    pass
+
+
 class ResetPassword(Exception):
     pass
 

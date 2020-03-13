@@ -85,7 +85,10 @@ def create_user(email, password):
     user = _store.create(_schema, 'users', data)
     user = _auth.login(user, password)
 
-    passed = _auth.request_verify_email(url, user['id'], user['email'])
+    data = _auth.request_welcome_email(_url, user['id'], user['email'])
+    token = data.pop('token')
+    _proto.send(_email_producer, data)
+    user['verify_token'] = token
     return strip_sensitive(user)
 
 
@@ -150,6 +153,8 @@ def delete_user(user_id):
 @rpc.register('/users.auth.login')
 def login_user(email, password):
     user = find_by_email(email)
+    if not user:
+        raise exc.UserNotFound('user does not exist')
     user = _auth.login(user, password)
     return strip_sensitive(user)
 
@@ -172,6 +177,8 @@ def set_email_verified(token):
 @rpc.register('/users.auth.requestPasswordReset')
 def request_password_reset(email):
     user = find_by_email(email)
+    if not user:
+        raise exc.UserNotFound('user does not exist')
     data = _auth.request_password_reset(_url, _store, user['id'])
     token = data.pop('token')
     _proto.send(_email_producer, data)
