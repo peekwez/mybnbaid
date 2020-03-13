@@ -56,7 +56,7 @@ def handler(message):
 
 
 def _setup(server_addr, db_addr, email_addr):
-    global _server, _store
+    global _server, _store, _email_producer
     _server = rk.zkit.router(_ctx, server_addr, handler=handler)
     _email_producer = rk.zkit.producer(_ctx, email_addr)
     _store = sm.client.PGClient(db_addr)
@@ -85,7 +85,7 @@ def create_user(email, password):
     user = _store.create(_schema, 'users', data)
     user = _auth.login(user, password)
 
-    passed = _auth.request_verify_email(user['id'], user['email'])
+    passed = _auth.request_verify_email(url, user['id'], user['email'])
     return strip_sensitive(user)
 
 
@@ -157,9 +157,9 @@ def login_user(email, password):
 @rpc.register('/users.auth.requestVerifyEmail')
 def request_verify_email(user_id):
     user = _store.get(_schema, 'users', user_id)
-    data = _auth.request_verify_email(user_id, user['email'])
+    data = _auth.request_verify_email(_url, user_id, user['email'])
     token = data.pop('token')
-    #_proto.send(_email_producer, data)
+    _proto.send(_email_producer, data)
     return {'token': token}
 
 
@@ -172,9 +172,9 @@ def set_email_verified(token):
 @rpc.register('/users.auth.requestPasswordReset')
 def request_password_reset(email):
     user = find_by_email(email)
-    data = _auth.request_password_reset(_store, user['id'])
+    data = _auth.request_password_reset(_url, _store, user['id'])
     token = data.pop('token')
-    #_proto.send(_email_producer, data)
+    _proto.send(_email_producer, data)
     return {'token': token}
 
 

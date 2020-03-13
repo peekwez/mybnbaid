@@ -1,8 +1,9 @@
-Thanks for signing up for Mybnbaid We're excited to have you as a user.
+We received a request to verify your email. Just copy 
+and paste the link in your web browser
 
 Verify Email {{action_url}}
 
-Thanks,
+Thank you,
 
 The Mybnbaid Team
-Yarrow Lane, Holland Landing, ON L9N
+6D-7398 Yonge Street, Unit #335, Thornhill, ON L4J8J2

@@ -8,7 +8,7 @@ from . import exceptions as exc
 
 
 # logging variables
-_log = rk.utils.logger('email.service', 'INFO')
+_log = rk.utils.logger('mail.service', 'INFO')
 
 # consumer socket
 _ctx = zmq.Context()
@@ -32,26 +32,30 @@ def _prep_email(subject, html, text):
 
 
 def handler(message):
-    identity, req = rk.utils.unpack(_proto, message, 'email')
-    message = _prep_email(req.subject, req.html, req.text)
-    response = _ses.send_email(
-        Source='no-reply@mybnbaid.com',
-        Destination={'ToAddresses': eq.emails},
-        Message=message
-    )
-    metadata = response.get("ResponseMetaData")
-    result = 'failed..'
-    if metadata.get('HTTPStatusCode') == 200:
-        result = 'sent...'
-    _log.info(f'{req.subject} email to {req.email} {result}')
+    _, req = rk.utils.unpack(_proto, message, 'email')
+    try:
+        contents = _prep_email(req.subject, req.html, req.text)
+        response = _ses.send_email(
+            Source='no-reply@mybnbaid.com',
+            Destination={'ToAddresses': req.emails},
+            Message=contents
+        )
+    except Exception as err:
+        log.exception(err)
+        result = 'failed...'
+    else:
+        metadata = response.get("ResponseMetadata")
+        if metadata.get('HTTPStatusCode') == 200:
+            result = 'sent...'
+    finally:
+        _log.info(f'{req.subject} email to {req.emails} {result}')
 
 
 def _setup(email_addr):
-    global _consumer
-    _consumer = rk.zkit.router(_ctx, email_addr, handler=handler)
-    _ses = rk.aws.get_client(
-        'ses', use_session=False, region='use-east-1'
-    )
+    global _consumer, _ses
+    _consumer = rk.zkit.consumer(_ctx, email_addr, handler=handler)
+    _ses = rk.aws.get_client('ses', use_session=False, region='us-east-1')
+    _log.info('consumer and SES client started...')
 
 
 def start(email_addr):

@@ -1,0 +1,10 @@
+We're excited to have you get started. First, you need to
+verify your email. Just copy and paste the link in your web 
+browser
+
+Verify Email {{action_url}}
+
+Thank you,
+
+The Mybnbaid Team
+6D-7398 Yonge Street, Unit #335, Thornhill, ON L4J8J2

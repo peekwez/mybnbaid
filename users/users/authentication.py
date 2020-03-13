@@ -23,8 +23,7 @@ _passwd = rk.auth.PasswordManager()
 _proto = rk.msg.Client(b'mpack')
 
 # email templates
-_path = os.path.dirname(os.path.abspath(__file__))
-_loader = rk.utils.loader(f'{_path}/emails')
+_loader = rk.utils.loader('users', 'emails')
 
 
 def encrypt(password, salt=None):

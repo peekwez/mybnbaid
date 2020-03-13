@@ -15,7 +15,7 @@ setup(
         'pyzmq==18.1.0',
         'tornado==6.0.3',
     ],
-    package_data={'users': ['emails/*']},
+    package_data={'users': ['emails/*.txt', 'emails/*.html']},
     extras_require={
         'dev': [
             'pytest==3.1.1',

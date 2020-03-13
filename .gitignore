@@ -6,6 +6,9 @@
 *.zip
 *.vscode*
 
+notebooks/
+logs/
+
 build/
 dist/
 *.egg*

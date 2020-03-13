@@ -45,10 +45,6 @@ def get_token(h):
     return token
 
 
-enable_pretty_logging()
-define('port', default=8888, help='port to listen')
-
-
 class GatewayHandler(web.RequestHandler):
     _addr = None
     _msg = rk.msg.Client(b'mpack')
@@ -121,6 +117,10 @@ class GatewayHandler(web.RequestHandler):
 
 class UserHandler(GatewayHandler):
     _addr = 'tcp://127.0.0.1:5001'
+
+
+enable_pretty_logging()
+define('port', default=8888, help='port to listen')
 
 
 def main():
