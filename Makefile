@@ -6,6 +6,7 @@ export
 NAME := xyz
 IMAGES := users zones mail sms gateway
 SERVICES := users zones mail sms gateway
+DEPS := schemaless rock
 LOGS = supervisor circus gateway.service users.service \
 	mail.service users.queue mail.streamer \
 	sms.service sms.streamer zones.queue \
@@ -21,7 +22,12 @@ init:
 	python sample/initsvc.py -d $(ROOT) -s $(NAME)
 	chmod a+x $(ROOT)/$(NAME)/run.sh
 	
-install:
+dependencies:
+	for dep in $(DEPS); \
+	do make -C dependencies/$$dep install;
+	done
+
+install: dependencies
 	for service in $(SERVICES); \
 	do make -C $$service install-service; \
 	done
