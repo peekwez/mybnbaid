@@ -132,10 +132,6 @@ class ZonesHandler(AuthGatewayHandler):
 #     _svc = 'accounts'
 
 
-# class PropertiesHandler(AuthGatewayHandler):
-#     _svc = 'properties'
-
-
 # class BookingsHandler(AuthGatewayHandler):
 #     _svc = 'bookings'
 

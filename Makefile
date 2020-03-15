@@ -18,10 +18,11 @@ build: build-images
 push: push-images
 
 
-init:
-	python sample/initsvc.py -d $(ROOT) -s $(NAME)
+create:
+	rock.service -d $(ROOT) -s $(NAME)
 	chmod a+x $(ROOT)/$(NAME)/run.sh
-	
+	git add $(NAME)/*
+
 dependencies:
 	for dep in $(DEPS); \
 	do make -C dependencies/$$dep install;

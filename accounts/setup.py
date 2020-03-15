@@ -2,15 +2,16 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='mybnbaid-{{service}}',
+    name='mybnbaid-accounts',
     version='0.0.1',
-    description='Mybnbaid {{service}} microservice',
+    description='Mybnbaid accounts microservice',
     packages=find_packages(exclude=['test', 'test.*']),
     entry_points={
-        'console_scripts': ['mybnbaid.{{service}}={{service}}.service:main']
+        'console_scripts': ['mybnbaid.accounts=accounts.service:main']
     },
     install_requires=[
         'rock==0.0.1',
+        'schemaless==0.0.1',
         'pyzmq==18.1.0',
         'tornado==6.0.3'
     ],
