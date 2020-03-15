@@ -12,3 +12,7 @@ class BadHeaderFormat(Exception):
 
 class LoginRequired(Exception):
     pass
+
+
+class UserLoggedOut(Exception):
+    pass

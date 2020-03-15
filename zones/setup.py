@@ -14,7 +14,7 @@ setup(
         'pyzmq==18.1.0',
         'tornado==6.0.3'
     ],
-    include_package_data=True,
+    package_data={'zones': ['*.csv']},
     extras_require={
         'dev': [
             'pytest==3.1.1',

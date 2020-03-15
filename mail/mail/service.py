@@ -51,33 +51,21 @@ def handler(message):
         _log.info(f'{req.subject} email to {req.emails} {result}')
 
 
-def _setup(email_addr):
+def _setup(cfg):
     global _consumer, _ses
-    _consumer = rk.zkit.consumer(_ctx, email_addr, handler=handler)
+    _consumer = rk.zkit.consumer(_ctx, cfg['addr'], handler=handler)
     _ses = rk.aws.get_client('ses', use_session=False, region='us-east-1')
-    _log.info('consumer and SES client started...')
+    _log.info('email consumer and aws ses client started...')
 
 
-def start(email_addr):
+def main():
+    cfg = rk.utils.parse_config('services')
     _log.info('starting email service...')
-    _setup(email_addr)
+    _setup(cfg['mail'])
     try:
         ioloop.IOLoop.current().start()
     except KeyboardInterrupt:
         _log.info('email service interrupted')
-
-
-def main():
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-
-    parser.add_argument(
-        '-e', '--email_addr', dest='email_addr',
-        help='service end point',
-        default='tcp://127.0.0.1:6000'
-    )
-    options = parser.parse_args()
-    start(options.email_addr)
 
 
 if __name__ == "__main__":

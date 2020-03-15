@@ -5,6 +5,7 @@
 *.code-workspace
 *.zip
 *.vscode*
+*.supervisord.conf
 
 notebooks/
 logs/

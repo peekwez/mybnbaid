@@ -4,9 +4,12 @@ ROOT ?= ${CURDIR}
 export
 
 NAME := xyz
-IMAGES := users mail gateway
-SERVICE := users mail gateway
-LOGS = supervisor gateway.service users.service mail.service users.queue mail.streamer
+IMAGES := users zones mail sms gateway
+SERVICES := users zones mail sms gateway
+LOGS = supervisor circus gateway.service users.service \
+	mail.service users.queue mail.streamer \
+	sms.service sms.streamer zones.queue \
+	zones.service
 
 
 build: build-images
@@ -18,6 +21,11 @@ init:
 	python sample/initsvc.py -d $(ROOT) -s $(NAME)
 	chmod a+x $(ROOT)/$(NAME)/run.sh
 	
+install:
+	for service in $(SERVICES); \
+	do make -C $$service install-service; \
+	done
+
 prune:
 	docker system prune
 
@@ -28,23 +36,27 @@ network:
 	--gateway=192.168.0.1 \
 	$(PROJECT)
 
-start:
-	docker-compose up --remove-orphans $(SERVICE)
+compose:
+	docker-compose up -d --remove-orphans $(SERVICES)
 
-create-logs:
+logs:
 	rm -fr logs 
 	mkdir logs
 	for file in $(LOGS); \
 	do touch logs/$$file.log ; done
 
-start-procs: create-logs
+supervisor:
+	rock.supervisor -c config.yml
+
+start: install logs
+	rock.supervisor -c config.yml
 	supervisord -c supervisord.conf
 
-stop-procs:
+stop:
 	supervisorctl -u mybnbaid -p password stop all
 	supervisorctl -u mybnbaid -p password shutdown
 
-check-procs:
+status:
 	supervisorctl -u mybnbaid -p password status
 
 build-base:
@@ -73,6 +85,3 @@ push-images:
 	for image in $(IMAGES); \
 	do make -C $$image push-image; \
 	done
-
-test:
-	@echo ${ROOT}

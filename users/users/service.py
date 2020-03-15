@@ -2,6 +2,7 @@ import zmq
 
 from tornado import ioloop
 
+
 import schemaless as sm
 import rock as rk
 
@@ -18,17 +19,17 @@ _proto = rk.msg.Client(b'mpack')
 # zmq variables
 _ctx = zmq.Context()
 _server = None
-_email_producer = None  # emails
+_producers = {}
 
 # datastore variables
-_store = None
 _schema = 'users'
+_store = None
 
 
 # rpc api endpoints
 rpc = rk.utils.RPC()
 
-
+# fields to remove before sending
 _sensitive = ('id', 'password', 'salt', 'reset_password')
 
 
@@ -38,28 +39,18 @@ def strip_sensitive(user, fields=_sensitive):
 
 
 def handler(message):
-    ibeg = rk.utils.time()
-    sid, req = rk.utils.unpack(_proto, message)
-    try:
-        func = rpc[req.method]
-        res = func(**req.args)
-    except Exception as err:
-        res = rk.utils.error(err)
-        _log.exception(err)
-    else:
-        res['ok'] = True
-    finally:
-        _proto.send(_server, res, sid)
-        iend = rk.utils.time()
-        elapsed = 1000*(iend-ibeg)
-        _log.info(f'{req.method} >> {func.__name__} {elapsed:0.2f}ms')
+    rk.utils.handle_rpc(message, rpc, _proto, _server, _log)
 
 
-def _setup(server_addr, db_addr, email_addr):
-    global _server, _store, _email_producer
-    _server = rk.zkit.router(_ctx, server_addr, handler=handler)
-    _email_producer = rk.zkit.producer(_ctx, email_addr)
-    _store = sm.client.PGClient(db_addr)
+def _setup(cfg):
+    global _server, _producers, _store
+    _server = rk.zkit.router(_ctx, cfg['addr'], handler=handler)
+    prods = cfg.get('producers', None)
+    if prods:
+        for key in prods:
+            _producers[key] = rk.zkit.producer(_ctx, prods[key])
+    _store = sm.client.PGClient(rk.aws.get_db_secret('users'))
+    _log.info('users service, producers and datstore started...')
 
 
 def find_by_email(email):
@@ -87,7 +78,7 @@ def create_user(email, password):
 
     data = _auth.request_welcome_email(_url, user['id'], user['email'])
     token = data.pop('token')
-    _proto.send(_email_producer, data)
+    _proto.send(_producers['mail'], data)
     user['verify_token'] = token
     return strip_sensitive(user)
 
@@ -103,6 +94,12 @@ def set_name(user_id, first_name, last_name):
 def set_phone_number(user_id, phone_number):
     data = {'phone_number': phone_number}
     user = _store.update(_schema, 'users', user_id, data)
+    text = {
+        'action': 'send',
+        'message': 'Welcome to mybnbaid!',
+        'number': 'phone_number'
+    }
+    _proto.send(_producers['sms'], text)
     return strip_sensitive(user)
 
 
@@ -164,7 +161,7 @@ def request_verify_email(user_id):
     user = _store.get(_schema, 'users', user_id)
     data = _auth.request_verify_email(_url, user_id, user['email'])
     token = data.pop('token')
-    _proto.send(_email_producer, data)
+    _proto.send(producers['mail'], data)
     return {'token': token}
 
 
@@ -181,7 +178,7 @@ def request_password_reset(email):
         raise exc.UserNotFound('user does not exist')
     data = _auth.request_password_reset(_url, _store, user['id'])
     token = data.pop('token')
-    _proto.send(_email_producer, data)
+    _proto.send(producers['mail'], data)
     return {'token': token}
 
 
@@ -191,43 +188,16 @@ def reset_password(token, password):
     return {'passed': True}
 
 
-def start(server_addr, db_addr, email_addr):
+def main():
+    cfg = rk.utils.parse_config('services')
     _log.info('starting users service...')
-    _setup(server_addr, db_addr, email_addr)
+    _setup(cfg['users'])
     try:
         ioloop.IOLoop.current().start()
     except KeyboardInterrupt:
         _log.info('user service interrupted')
+    finally:
         _store.close()
-
-
-def main():
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-
-    parser.add_argument(
-        '-s', '--server_addr', dest='server_addr',
-        help='service end point',
-        default='tcp://127.0.0.1:5000'
-    )
-
-    parser.add_argument(
-        '-d', '--db_addr', dest='db_addr',
-        help='database address',
-        default='postgres://postgres:password@127.0.0.1:5433/users'
-    )
-
-    parser.add_argument(
-        '-e', '--email_addr', dest='email_addr',
-        help='email producer address',
-        default='tcp://127.0.0.1:6001'
-    )
-    options = parser.parse_args()
-    start(
-        options.server_addr,
-        options.db_addr,
-        options.email_addr
-    )
 
 
 if __name__ == "__main__":

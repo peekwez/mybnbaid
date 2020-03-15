@@ -1,21 +1,11 @@
-import os
-
-
 import rock as rk
 
 from . import exceptions as exc
 
 _schema = 'users'
 
-# get api secrets/keys
-_prod = os.environ.get('MYBNBAID-PROD', False)
-_name = 'DEV_TOKEN_SECRETS'
-if _prod:
-    _name = 'PROD_TOKEN_SECRETES'
-_secrets = rk.aws.get_secret(_name)
-
-# initiate authentication clients
-_token = rk.auth.TokenManager(_secrets)
+# initialize token clients
+_token = rk.auth.TokenManager(rk.aws.get_token_secrets())
 _passwd = rk.auth.PasswordManager()
 
 

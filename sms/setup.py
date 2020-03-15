@@ -10,7 +10,7 @@ setup(
         'console_scripts': ['mybnbaid.sms=sms.service:main']
     },
     install_requires=[
-        'rock==0.0.1'
+        'rock==0.0.1',
         'pyzmq==18.1.0',
         'tornado==6.0.3'
     ],
