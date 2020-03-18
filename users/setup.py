@@ -7,7 +7,10 @@ setup(
     description='Mybnbaid users microservice',
     packages=find_packages(exclude=['test', 'test.*']),
     entry_points={
-        'console_scripts': ['mybnbaid.users=users.service:main']
+        'console_scripts': [
+            'mybnbaid.users=users.service:main',
+        ]
+
     },
     install_requires=[
         'rock==0.0.1',

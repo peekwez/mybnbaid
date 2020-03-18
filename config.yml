@@ -1,23 +1,24 @@
-devices:
-  users: [queue, tcp://*:5556, tcp://*:5555]
-  zones: [queue, tcp://*:6666, tcp://*:6665]
-  mail: [streamer, tcp://*:15556, tcp://*:15555]
-  sms: [streamer, tcp://*:16666, tcp://*:16665]
-
 services:
-  mail:
-    addr: tcp://localhost:15555
-  sms:
-    addr: tcp://localhost:16665
   users:
-    addr: tcp://localhost:5555
-    producers:
-      mail: tcp://localhost:15556
-      sms: tcp://localhost:16666
-  zones:
-    addr: tcp://localhost:6665
-
+    broker: tcp://localhost:5555
+    db:
+      name: users
+      client: schemaless
+    clients:
+      - mail
+      - sms
+    workers: 5
+  # zones:
+  #   addr: tcp://localhost:5556
+  #   workers: 2
+  # mail:
+  #   broker: tcp://localhost:5557
+  #   workers: 2
+  # sms:
+  #   broker: tcp://localhost:5558
+  #   workers: 2
 gateway:
-  services:
-    users: tcp://localhost:5556
-    zones: tcp://localhost:6666
+  workers: 4
+  clients:
+    - users
+    #- zones

@@ -7,10 +7,10 @@ NAME := xyz
 IMAGES := users zones mail sms gateway
 SERVICES := users zones mail sms gateway
 DEPS := schemaless rock
-LOGS = supervisor circus gateway.service users.service \
-	mail.service users.queue mail.streamer \
-	sms.service sms.streamer zones.queue \
-	zones.service
+LOGS = supervisor gateway.service users.service \
+	   mail.service sms.service zones.service \
+	   users.broker mail.broker sms.broker \
+	   zones.broker
 
 
 build: build-images
@@ -55,8 +55,8 @@ logs:
 supervisor:
 	rock.supervisor -c config.yml
 
-start: install logs
-	rock.supervisor -c config.yml
+start: supervisor install logs
+	sleep 5
 	supervisord -c supervisord.conf
 
 stop:

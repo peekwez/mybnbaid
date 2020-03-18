@@ -8,10 +8,6 @@ _schema = 'users'
 _token = rk.auth.TokenManager(rk.aws.get_token_secrets())
 _passwd = rk.auth.PasswordManager()
 
-
-# initialize message client
-_proto = rk.msg.Client(b'mpack')
-
 # email templates
 _loader = rk.utils.loader('users', 'emails')
 
@@ -65,16 +61,16 @@ def request_verify_email(url, user_id, email):
     return data
 
 
-def verify_email(store, token):
+def verify_email(db, token):
     user_id = _token.verify('VERIFY', token, ttl=259200)  # 3 days
     data = {'email_verified': True}
-    _ = store.update(_schema, 'users', user_id, data)
+    _ = db.update(_schema, 'users', user_id, data)
     return data
 
 
-def request_password_reset(url, store, user_id):
+def request_password_reset(url, db, user_id):
     data = {'reset_password': True}
-    user = store.update(_schema, 'users', user_id, data)
+    user = db.update(_schema, 'users', user_id, data)
     token = _token.create('RESET', user_id)
 
     data = create_token_email('reset-password', url, user['email'], token)
@@ -82,9 +78,9 @@ def request_password_reset(url, store, user_id):
     return data
 
 
-def reset_password(store, token, password):
+def reset_password(db, token, password):
     user_id = _token.verify('RESET', token, ttl=1800)
-    user = store.get(_schema, 'users', user_id)
+    user = db.get(_schema, 'users', user_id)
 
     # is password same as current password?
     _, hashed = encrypt(password, user['salt'])
@@ -93,21 +89,21 @@ def reset_password(store, token, password):
 
     # is password blacklisted?
     params = (("user_id",), (user_id,))
-    black = store.filter(_schema, 'blacklists', params)['items']
+    black = db.filter(_schema, 'blacklists', params)['items']
     if black:
         pk, blacklist = black[0]['id'], black[0]['passwords']
         if hashed in blacklist:
             raise exc.PasswordUsed('password has already been used')
         blacklist.append(user['password'])
-        _ = store.update(
+        _ = db.update(
             _schema, 'blacklists', pk, {'passwords': blacklist}
         )
     else:  # if no blacklist exist yet
         blacklist = {'user_id': user_id, 'passwords': [user['password']]}
-        _ = store.create(_schema, 'blacklists', blacklist)
+        _ = db.create(_schema, 'blacklists', blacklist)
 
     # update user password
     data = {'password': hashed, 'reset_password': False}
-    _ = store.update(_schema, 'users', user_id, data)
+    _ = db.update(_schema, 'users', user_id, data)
 
     return True
