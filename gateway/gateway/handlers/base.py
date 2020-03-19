@@ -1,4 +1,3 @@
-
 from tornado import gen
 from tornado import web
 from tornado.concurrent import run_on_executor
@@ -8,9 +7,7 @@ import rock as rk
 
 from . import mapping
 
-_token = rk.auth.TokenManager(
-    {'LOGIN': rk.aws.get_token_secrets()['LOGIN']}
-)
+
 MAX_WORKERS = 4
 
 
@@ -30,7 +27,7 @@ class BaseHandler(web.RequestHandler):
     )
     _map = mapping.urls
     _client = None
-    _name = None
+    _service = None
 
     def prepare(self):
         self.data = get_data(self.request)
@@ -43,7 +40,7 @@ class BaseHandler(web.RequestHandler):
     def process_request(self):
         method = self._map.get(self.uri)
         message = rk.msg.pack(method, self.data)
-        self._client.send(self._name, message)
+        self._client.send(self._service, message)
         response = False
         while not response:
             try:
@@ -69,6 +66,10 @@ class BaseHandler(web.RequestHandler):
 
 
 class BaseAuthHandler(BaseHandler):
+    _token = rk.auth.TokenManager(
+        {'LOGIN': rk.aws.get_token_secrets()['LOGIN']}
+    )
+
     def prepare(self):
         super(BaseAuthHandler, self).prepare()
         token = self.data.pop('token')
@@ -79,6 +80,6 @@ class BaseAuthHandler(BaseHandler):
                 'details': 'request token was not provided'
             })
         try:
-            user_id = _token.verify(token)
+            user_id = self._token.verify(token)
         except Exception as err:
             self._on_complete(rk.utils.error(err))

@@ -28,7 +28,7 @@ dependencies:
 	do make -C dependencies/$$dep install;
 	done
 
-install: dependencies
+install:
 	for service in $(SERVICES); \
 	do make -C $$service install-service; \
 	done

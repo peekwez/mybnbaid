@@ -5,11 +5,18 @@ from . import exceptions as exc
 _schema = 'users'
 
 # initialize token clients
-_token = rk.auth.TokenManager(rk.aws.get_token_secrets())
-_passwd = rk.auth.PasswordManager()
+_token = None
+_passwd = None
 
 # email templates
-_loader = rk.utils.loader('users', 'emails')
+_loader = None
+
+
+def init():
+    global _token, _passwd, _loader
+    _token = rk.auth.TokenManager(rk.aws.get_token_secrets())
+    _passwd = rk.auth.PasswordManager()
+    _loader = rk.utils.loader('users', 'emails')
 
 
 def encrypt(password, salt=None):

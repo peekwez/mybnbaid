@@ -1,11 +1,6 @@
-import zmq
-import collections
-
-from tornado import ioloop
-# import schemaless as sm
 import rock as rk
 
-# from . import exceptions as exc
+from . import exceptions as exc
 from . import authentication as _auth
 
 _schema = 'users'
@@ -18,9 +13,9 @@ def strip_sensitive(user, fields=_sensitive):
 
 
 class UsersService(rk.utils.BaseService):
-    name = b'users'
-    version = b'0.0.1'
-    log = rk.utils.logger('users.service')
+    _name = b'users'
+    _version = b'0.0.1'
+    _log = rk.utils.logger('users.service')
 
     def __find_by_email(self, email):
         items = self._db.filter(
@@ -30,6 +25,13 @@ class UsersService(rk.utils.BaseService):
             return items[0]
         except IndexError:
             return None
+
+    def __send_mail(self, data):
+        message = rk.msg.pack('send', data)
+        res = self._clients['mail'].send(
+            self._name, message
+        )
+        return res
 
     def create_user(self, email, password):
         user = self.__find_by_email(email)
@@ -45,7 +47,8 @@ class UsersService(rk.utils.BaseService):
 
         data = _auth.request_welcome_email(_url, user['id'], user['email'])
         token = data.pop('token')
-        #_proto.send(_producers['mail'], data)
+
+        # res = self.__send_mail(data)
         user['verify_token'] = token
         return strip_sensitive(user)
 
@@ -137,12 +140,11 @@ class UsersService(rk.utils.BaseService):
 
 
 def main():
-    options = rk.utils.parse_config('services')['users']
-    broker = options['broker']
-    db = options.get('db', None)
-    cache = options.get('cache', None)
-    verbose = options.get('verbose', None) == True
-    with UsersService(broker, db, cache, verbose) as service:
+    verbose = rk.utils.parse_config('verbose') == True
+    brokers = rk.utils.parse_config('brokers')
+    conf = rk.utils.parse_config('services')['users']
+    _auth.init()
+    with UsersService(brokers, conf, verbose) as service:
         service()
 
 
