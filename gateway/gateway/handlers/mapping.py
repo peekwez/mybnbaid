@@ -13,4 +13,10 @@ urls = collections.OrderedDict((
     (r'/users.address.update', 'update_address'),
     (r'/users.address.list', 'list_address'),
     (r'/users.address.delete', 'delete_address'),
+    (r'/zones.getLocation', 'get_location'),
+    (r'/zones.getCity', 'get_city'),
+    (r'/zones.getRegion', 'get_region'),
+    (r'/zones.locations', 'get_locations'),
+    (r'/zones.cities', 'get_cities'),
+    (r'/zones.regions', 'get_regions'),
 ))

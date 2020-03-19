@@ -1,17 +1,24 @@
-verbose: True
+verbose: False
 
 brokers:
   mail: tcp://127.0.0.1:5557
+  sms: tcp://127.0.0.1:5558
   users: tcp://127.0.0.1:5555
+  zones: tcp://127.0.0.1:5556
 
 services:
   mail:
-    workers: 2
+    workers: 1
+  sms:
+    workers: 1
   users:
     db: schemaless
     clients:
       - mail
-    workers: 5
+      - sms
+    workers: 2
+  zones:
+    workers: 1
 
 gateway:
-  workers: 4
+  workers: 2

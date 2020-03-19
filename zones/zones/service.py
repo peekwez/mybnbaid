@@ -1,80 +1,43 @@
-import zmq
-
-from tornado import ioloop
-
 import rock as rk
 
 from . import exceptions as exc
 from . import store as db
 
-# logging variables
-_log = rk.utils.logger('zones.service', 'INFO')
 
-# message format
-_proto = rk.msg.Client(b'mpack')
+class ZonesService(rk.utils.BaseService):
+    _name = b'zones'
+    _version = b'0.0.1'
+    _log = rk.utils.logger('zones.service')
 
-# zmq variables
-_ctx = zmq.Context()
-_server = None
+    def __init__(self, brokers, conf, verbose):
+        super(ZonesService, self).__init__(brokers, conf, verbose)
+        self._db = db.ZonesStore()  # sqlite in memory store
 
-# zone data
-_store = None
+    def get_location(self, fsa):
+        return self._db.zones.location(fsa)
 
-# rpc api endpoints
-rpc = rk.utils.RPC()
+    def get_city(self, fsa):
+        return self._db.zones.city(fsa)
 
+    def get_region(self, fsa):
+        return self._db.zones.region(fsa)
 
-def handler(message):
-    rk.utils.handle_rpc(message, rpc, _proto, _server, _log)
+    def get_locations(self):
+        return self._db.zones.locations()
 
+    def get_cities(self, fsa):
+        return self._db.zones.cities(fsa)
 
-def _setup(cfg):
-    global _server, _store
-    _server = rk.zkit.router(_ctx, cfg['addr'], handler=handler)
-    _store = db.ZoneStore()
-    _log.info('zones service and datstore started...')
-
-
-@rpc.register('/zones.getArea')
-def get_location(fsa):
-    return _store.zones.location(fsa)
-
-
-@rpc.register('/zones.getCity')
-def get_city(fsa):
-    return _store.zones.city(fsa)
-
-
-@rpc.register('/zones.getRegion')
-def get_region(fsa):
-    return _store.zones.region(fsa)
-
-
-@rpc.register('/zones.areas')
-def get_location():
-    return _store.zones.areas()
-
-
-@rpc.register('/zones.cities')
-def get_city(fsa):
-    return _store.zones.cities(fsa)
-
-
-@rpc.register('/zones.regions')
-def get_region(fsa):
-    return _store.zones.regions(fsa)
+    def get_regions(self, fsa):
+        return self._db.zones.regions(fsa)
 
 
 def main():
-    cfg = rk.utils.parse_config('services')
-    _log.info('starting zones service...')
-    _setup(cfg['zones'])
-    try:
-        ioloop.IOLoop.current().start()
-    except KeyboardInterrupt:
-        _log.info('zones service interrupted')
-    finally:
-        _store.close()
+    verbose = rk.utils.parse_config('verbose') == True
+    brokers = rk.utils.parse_config('brokers')
+    conf = rk.utils.parse_config('services')['zones']
+    with ZonesService(brokers, conf, verbose) as service:
+        service()
 
 
 if __name__ == "__main__":

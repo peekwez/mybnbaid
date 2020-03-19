@@ -10,3 +10,7 @@ class UsersNoAuthHandler(base.BaseHandler):
 
 class UsersHandler(base.BaseAuthHandler):
     _service = b'users'
+
+
+class ZonesHandler(base.BaseAuthHandler):
+    _service = b'zones'

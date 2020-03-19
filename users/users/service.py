@@ -23,14 +23,17 @@ class UsersService(rk.utils.BaseService):
         )['items']
         try:
             return items[0]
-        except IndexError:
+        except IndexError as err:
             return None
 
-    def __send_mail(self, data):
-        message = rk.msg.pack('send', data)
-        res = self._clients['mail'].send(
-            self._name, message
-        )
+    def ___send_mail(self, data):
+        mail = rk.msg.prepare('send', data)
+        res = self._clients['mail'].send(b'mail', mail)
+        return res
+
+    def __send_sms(seld, action, data):
+        sms = rk.msg.prepare(action, data)
+        res = self._clients['sms'].send(b'sms', sms)
         return res
 
     def create_user(self, email, password):
@@ -45,10 +48,12 @@ class UsersService(rk.utils.BaseService):
         user = self._db.create(_schema, 'users', data)
         user = _auth.login(user, password)
 
-        data = _auth.request_welcome_email(_url, user['id'], user['email'])
+        data = _auth.request_welcome_email(
+            _url, user['id'], user['email']
+        )
         token = data.pop('token')
+        res = self.__send_mail(data)
 
-        # res = self.__send_mail(data)
         user['verify_token'] = token
         return strip_sensitive(user)
 
@@ -63,12 +68,12 @@ class UsersService(rk.utils.BaseService):
     def set_phone_number(self, user_id, phone_number):
         data = {'phone_number': phone_number}
         user = self._db.update(_schema, 'users', user_id, data)
-        text = {
+        data = {
             'action': 'send',
             'message': 'Welcome to mybnbaid!',
             'number': 'phone_number'
         }
-        # _proto.send(_producers['sms'], text)
+        res = self.__send_sms('send', data)
         return strip_sensitive(user)
 
     def create_address(self, user_id, street, city, postcode, country):
@@ -116,9 +121,10 @@ class UsersService(rk.utils.BaseService):
 
     def request_verify_email(self, user_id):
         user = self._db.get(_schema, 'users', user_id)
+
         data = _auth.request_verify_email(_url, user_id, user['email'])
         token = data.pop('token')
-        #_proto.send(producers['mail'], data)
+        res = self.__send_mail(data)
         return {'token': token}
 
     def set_email_verified(self, token):
@@ -131,7 +137,7 @@ class UsersService(rk.utils.BaseService):
             raise exc.UserNotFound('user does not exist')
         data = _auth.request_password_reset(_url, self._db, user['id'])
         token = data.pop('token')
-        #_proto.send(producers['mail'], data)
+        res = self.__send_mail(data)
         return {'token': token}
 
     def reset_password(self, token, password):

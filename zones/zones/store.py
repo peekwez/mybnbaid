@@ -85,7 +85,7 @@ class ZoneStore(object):
     def region(self, fsa):
         return self._get(fsa)[2]
 
-    def area(self, fsa):
+    def location(self, fsa):
         return self._get(fsa)
 
     def cities(self):
@@ -94,6 +94,6 @@ class ZoneStore(object):
     def regions(self):
         return self._filter('region')
 
-    def areas(self):
+    def locations(self):
         self._cur.execute(_all())
         return self._cur.fetchall()

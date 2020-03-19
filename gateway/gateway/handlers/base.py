@@ -1,3 +1,5 @@
+import json
+
 from tornado import gen
 from tornado import web
 from tornado.concurrent import run_on_executor
@@ -15,8 +17,8 @@ def get_data(request):
     data = {}
     if request.headers.get('Content-Type', '').startswith('application/json'):
         try:
-            data = rk.msg.loads(request.body)
-        except rk.msg.json.decoder.JSONDecodeError:
+            data = json.loads(request.body)
+        except json.decoder.JSONDecodeError:
             data = {}
     return data
 
@@ -38,8 +40,8 @@ class BaseHandler(web.RequestHandler):
 
     @run_on_executor
     def process_request(self):
-        method = self._map.get(self.uri)
-        message = rk.msg.pack(method, self.data)
+        method = self._map(self.uri)
+        message = rk.msg.prepare(method, self.data)
         self._client.send(self._service, message)
         response = False
         while not response:
@@ -51,7 +53,7 @@ class BaseHandler(web.RequestHandler):
                 if reply is None:
                     break
                 response = True
-        return rk.msg.munpack(reply[-1])
+        return rk.msg.unpack(reply[-1])
 
     @gen.coroutine
     def post(self):
@@ -60,7 +62,7 @@ class BaseHandler(web.RequestHandler):
             yield self._on_complete(reply)
 
     def _on_complete(self, res):
-        self.write(rk.msg.dumps(res))
+        self.write(json.dumps(res))
         self.set_header('Content-Type', 'application/json')
         self.finish()
 
@@ -77,7 +79,7 @@ class BaseAuthHandler(BaseHandler):
             self._on_complete({
                 "ok": True,
                 "error": 'MissingToken',
-                'details': 'request token was not provided'
+                'details': 'request token is '
             })
         try:
             user_id = self._token.verify(token)

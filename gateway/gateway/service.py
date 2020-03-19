@@ -5,8 +5,10 @@ from tornado.log import enable_pretty_logging
 
 import rock as rk
 
-from .handlers.users import UsersHandler, UsersNoAuthHandler
-
+from .handlers.clients import (
+    UsersHandler, UsersNoAuthHandler,
+    ZonesHandler
+)
 
 enable_pretty_logging()
 
@@ -52,13 +54,13 @@ def main():
         (r'/users.address.create', UsersHandler),
         (r'/users.address.update', UsersHandler),
         (r'/users.address.list', UsersHandler)
-        # (r'/users.address.delete', UsersHandler),
-        # (r'/zones.getArea', ZonesHandler),
-        # (r'/zones.getCity', ZonesHandler),
-        # (r'/zones.getRegion', ZonesHandler),
-        # (r'/zones.areas', ZonesHandler),
-        # (r'/zones.cities', ZonesHandler),
-        # (r'/zones.regions', ZonesHandler),
+        (r'/users.address.delete', UsersHandler),
+        (r'/zones.getArea', ZonesHandler),
+        (r'/zones.getCity', ZonesHandler),
+        (r'/zones.getRegion', ZonesHandler),
+        (r'/zones.areas', ZonesHandler),
+        (r'/zones.cities', ZonesHandler),
+        (r'/zones.regions', ZonesHandler),
     ]
 
     # initialize clients
