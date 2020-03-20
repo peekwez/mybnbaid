@@ -7,11 +7,9 @@ NAME := xyz
 IMAGES := users zones mail sms gateway
 SERVICES := users zones mail sms gateway
 DEPS := schemaless rock
-LOGS = supervisor gateway.service users.service \
-	   mail.service sms.service zones.service \
-	   users.broker mail.broker sms.broker \
-	   zones.broker
 
+
+.PHONY = logs dependencies install supervisor
 
 build: build-images
 
@@ -28,7 +26,7 @@ dependencies:
 	do make -C dependencies/$$dep install;
 	done
 
-install:
+install: dependencies
 	for service in $(SERVICES); \
 	do make -C $$service install-service; \
 	done
@@ -49,13 +47,14 @@ compose:
 logs:
 	rm -fr logs 
 	mkdir logs
-	for file in $(LOGS); \
-	do touch logs/$$file.log ; done
+	touch logs/supervisord.log logs/access.log logs/error.log
+	for service in $(SERVICES); \
+	do touch logs/$$service.broker.log logs/$$service.service.log; done
 
 supervisor:
 	rock.supervisor -c config.yml
 
-start: supervisor install logs
+start: install logs supervisor
 	sleep 5
 	supervisord -c supervisord.conf
 

@@ -18,5 +18,5 @@ urls = collections.OrderedDict((
     (r'/zones.getRegion', 'get_region'),
     (r'/zones.locations', 'get_locations'),
     (r'/zones.cities', 'get_cities'),
-    (r'/zones.regions', 'get_regions'),
+    (r'/zones.regions', 'get_regions')
 ))

@@ -13,16 +13,6 @@ from . import mapping
 MAX_WORKERS = 4
 
 
-def get_data(request):
-    data = {}
-    if request.headers.get('Content-Type', '').startswith('application/json'):
-        try:
-            data = json.loads(request.body)
-        except json.decoder.JSONDecodeError:
-            data = {}
-    return data
-
-
 class BaseHandler(web.RequestHandler):
     executor = ThreadPoolExecutor(
         max_workers=MAX_WORKERS
@@ -32,7 +22,13 @@ class BaseHandler(web.RequestHandler):
     _service = None
 
     def prepare(self):
-        self.data = get_data(self.request)
+        self.data = {}
+        content_type = self.request.headers.get('Content-Type', '')
+        if content_type.startswith('application/json'):
+            try:
+                self.data = json.loads(self.request.body)
+            except json.decoder.JSONDecodeError:
+                self._on_complete(rk.utils.error(err))
 
     @property
     def uri(self):
@@ -40,7 +36,7 @@ class BaseHandler(web.RequestHandler):
 
     @run_on_executor
     def process_request(self):
-        method = self._map(self.uri)
+        method = self._map[self.uri]
         message = rk.msg.prepare(method, self.data)
         self._client.send(self._service, message)
         response = False
@@ -65,6 +61,7 @@ class BaseHandler(web.RequestHandler):
         self.write(json.dumps(res))
         self.set_header('Content-Type', 'application/json')
         self.finish()
+        return
 
 
 class BaseAuthHandler(BaseHandler):
@@ -74,14 +71,16 @@ class BaseAuthHandler(BaseHandler):
 
     def prepare(self):
         super(BaseAuthHandler, self).prepare()
-        token = self.data.pop('token')
-        if not token:
+        try:
+            token = self.data.pop('token')
+        except KeyError:
             self._on_complete({
                 "ok": True,
                 "error": 'MissingToken',
-                'details': 'request token is '
+                'details': 'request token is missing'
             })
         try:
-            user_id = self._token.verify(token)
+            user_id = self._token.verify('LOGIN', token, ttl=28800)
+            self.data.update({'user_id': user_id})
         except Exception as err:
             self._on_complete(rk.utils.error(err))

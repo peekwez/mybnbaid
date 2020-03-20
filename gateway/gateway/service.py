@@ -53,14 +53,14 @@ def main():
         (r'/users.setPhoneNumber', UsersHandler),
         (r'/users.address.create', UsersHandler),
         (r'/users.address.update', UsersHandler),
-        (r'/users.address.list', UsersHandler)
+        (r'/users.address.list', UsersHandler),
         (r'/users.address.delete', UsersHandler),
-        (r'/zones.getArea', ZonesHandler),
+        (r'/zones.getLocation', ZonesHandler),
         (r'/zones.getCity', ZonesHandler),
         (r'/zones.getRegion', ZonesHandler),
-        (r'/zones.areas', ZonesHandler),
+        (r'/zones.locations', ZonesHandler),
         (r'/zones.cities', ZonesHandler),
-        (r'/zones.regions', ZonesHandler),
+        (r'/zones.regions', ZonesHandler)
     ]
 
     # initialize clients

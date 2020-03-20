@@ -19,7 +19,7 @@ def _table():
 
 def _insert():
     return """
-    INSERT INTO zones (fsa,city,region) 
+    INSERT INTO zones (fsa,city,region)
     VALUES (?,?,?);
     """
 
@@ -42,9 +42,10 @@ def _filter(column):
     """
 
 
-class ZoneStore(object):
+class ZonesStore(object):
     def __init__(self):
         self._con = sqlite3.connect(':memory:')
+        self._con.row_factory = sqlite3.Row
         self._cur = self._con.cursor()
         self._setup()
 
@@ -72,28 +73,30 @@ class ZoneStore(object):
         self._cur.execute(_get(), (fsa,))
         data = self._cur.fetchall()
         if not data:
-            NotFound('there is not location for {fsa}')
-        return data[0]
+            raise NotFound(f'there is no location for {fsa}')
+        return dict(data[0])
 
     def _filter(self, column):
         self._cur.execute(_filter(column))
-        return self._cur.fetchall()
+        data = [dict(row) for row in self._cur.fetchall()]
+        return data
 
     def city(self, fsa):
-        return self._get(fsa)[1]
+        return {'city': self._get(fsa)['city']}
 
     def region(self, fsa):
-        return self._get(fsa)[2]
+        return {'region': self._get(fsa)['region']}
 
     def location(self, fsa):
         return self._get(fsa)
 
     def cities(self):
-        return self._filter('city')
+        return {'items': self._filter('city')}
 
     def regions(self):
-        return self._filter('region')
+        return {'items': self._filter('region')}
 
     def locations(self):
         self._cur.execute(_all())
-        return self._cur.fetchall()
+        data = [dict(row) for row in self._cur.fetchall()]
+        return {'items': data}

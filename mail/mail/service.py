@@ -1,4 +1,3 @@
-import os
 import zmq
 import collections
 from zmq.eventloop.zmqstream import ZMQStream
@@ -57,16 +56,17 @@ def consumer(addr):
     sock.linger = 0
     sock = ZMQStream(sock)
     sock.on_recv(handler)
-    log.info('mail consumer started...')
+    log.info('consumer started...')
 
     try:
         ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
         log.info('consumer interrupted...')
     finally:
-        log.info('consumer ending gracefully...')
+        log.info('closing consumer socket...')
         sock.close()
-        ctx.term()
+        if ctx:
+            ctx.term()
 
 
 def producer(addr):
@@ -77,35 +77,21 @@ def producer(addr):
 
 
 class MailService(rk.utils.BaseService):
-    __slots__ = ('_ctx', '_unix', '_addr', '_producer', '_consumers')
     _name = b'mail'
     _version = b'0.0.1'
-    _log = rk.utils.logger('mail.service')
 
     def __init__(self, brokers, conf, verbose):
         super(MailService, self).__init__(brokers, conf, verbose)
-        self._unix = f'/tmp/mail.{os.getpid()}.sock'
-        self._addr = f'ipc://{self._unix}'
-        self._ctx, self._producer = producer(self._addr)
+        self._setup_ipc()
+
+        self._ctx, self._producer = producer(self._ipc)
         self._log.info('mail producer started...')
+
         self._consumers = ()
         for num in range(MAX_WORKERS):
-            self._consumers += (Process(target=consumer, args=(self._addr,)),)
-
-    def __exit__(self, type, value, traceback):
-        super(MailService, self).__exit__(type, value, traceback)
-        self._producer.close()
-        self._ctx.term()
-        for worker in self._consumers:
-            worker.terminate()
-        if os.path.exists(self._unix):
-            os.remove(self._unix)
-            self.log.info(f'{self._unix} removed...')
-
-    def __call__(self):
-        for worker in self._consumers:
-            worker.start()
-        super(MailService, self).__call__()
+            self._consumers += (
+                Process(target=consumer, args=(self._ipc,)),
+            )
 
     def send(self, emails, subject, html, text):
         mail = rk.msg.pack(

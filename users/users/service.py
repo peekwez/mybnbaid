@@ -5,6 +5,7 @@ from . import authentication as _auth
 
 _schema = 'users'
 _sensitive = ('id', 'password', 'salt', 'reset_password')
+_url = 'https://mybnbaid.com'
 
 
 def strip_sensitive(user, fields=_sensitive):
@@ -15,7 +16,6 @@ def strip_sensitive(user, fields=_sensitive):
 class UsersService(rk.utils.BaseService):
     _name = b'users'
     _version = b'0.0.1'
-    _log = rk.utils.logger('users.service')
 
     def __find_by_email(self, email):
         items = self._db.filter(
@@ -26,12 +26,12 @@ class UsersService(rk.utils.BaseService):
         except IndexError as err:
             return None
 
-    def ___send_mail(self, data):
+    def __send_mail(self, data):
         mail = rk.msg.prepare('send', data)
         res = self._clients['mail'].send(b'mail', mail)
         return res
 
-    def __send_sms(seld, action, data):
+    def __send_sms(self, action, data):
         sms = rk.msg.prepare(action, data)
         res = self._clients['sms'].send(b'sms', sms)
         return res
@@ -69,9 +69,8 @@ class UsersService(rk.utils.BaseService):
         data = {'phone_number': phone_number}
         user = self._db.update(_schema, 'users', user_id, data)
         data = {
-            'action': 'send',
             'message': 'Welcome to mybnbaid!',
-            'number': 'phone_number'
+            'number': phone_number
         }
         res = self.__send_sms('send', data)
         return strip_sensitive(user)
