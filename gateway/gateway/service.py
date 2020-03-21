@@ -36,8 +36,8 @@ def main():
     )
     parser.add_argument(
         '-c', '--config', dest='config',
-        help='configuration with service available',
-        default='config.yml'
+        help='configuration with services available',
+        default='services.yml'
     )
     opts = parser.parse_args()
     conf = rk.utils.read_config(opts.config)

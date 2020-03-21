@@ -50,12 +50,7 @@ def consumer(addr):
         finally:
             log.info(f'{mail.subject} to {mail.emails} {result}')
 
-    ctx = zmq.Context(1)
-    sock = ctx.socket(zmq.PULL)
-    sock.connect(addr)
-    sock.linger = 0
-    sock = ZMQStream(sock)
-    sock.on_recv(handler)
+    ctx, sock = rk.zkit.consumer(addr, handler)
     log.info('consumer started...')
 
     try:
@@ -69,13 +64,6 @@ def consumer(addr):
             ctx.term()
 
 
-def producer(addr):
-    ctx = zmq.Context()
-    sock = ctx.socket(zmq.PUSH)
-    sock.bind(addr)
-    return ctx, sock
-
-
 class MailService(rk.utils.BaseService):
     _name = b'mail'
     _version = b'0.0.1'
@@ -84,7 +72,7 @@ class MailService(rk.utils.BaseService):
         super(MailService, self).__init__(brokers, conf, verbose)
         self._setup_ipc()
 
-        self._ctx, self._producer = producer(self._ipc)
+        self._ctx, self._producer = rk.zkit.producer(self._ipc)
         self._log.info('mail producer started...')
 
         self._consumers = ()

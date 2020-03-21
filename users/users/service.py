@@ -81,7 +81,7 @@ class UsersService(rk.utils.BaseService):
             'city': city, 'postcode': postcode,
             'country': country
         }
-        address = self._db.create(_schema, 'address', data)
+        address = self._db.create(_schema, 'addresses', data)
         return address
 
     def update_address(self, user_id, addr_id, street, city, postcode, country):
@@ -90,7 +90,7 @@ class UsersService(rk.utils.BaseService):
             'postcode': postcode, 'country': country
         }
         address = self._db.update(
-            _schema, 'address', addr_id, data
+            _schema, 'addresses', addr_id, data
         )
         return address
 
@@ -98,12 +98,12 @@ class UsersService(rk.utils.BaseService):
         params = (("user_id",), (user_id,))
         kwargs = {'offset': offset, 'limit': limit}
         addresses = self._db.filter(
-            _schema, 'address', params, **kwargs
+            _schema, 'addresses', params, **kwargs
         )
         return addresses
 
     def delete_address(self, user_id, addr_id):
-        self._db.delete(_schema, 'address', addr_id)
+        self._db.delete(_schema, 'addresses', addr_id)
         return {}
 
     def delete_user(self, user_id):
@@ -142,6 +142,11 @@ class UsersService(rk.utils.BaseService):
     def reset_password(self, token, password):
         passed = _auth.reset_password(self._db, token, password)
         return {'passed': True}
+
+    def get_phone_number(self, user_id):
+        user = self._db.get(_schema, 'users', user_id)
+        res = {'phone_number': user.get('phone_number')}
+        return res
 
 
 def main():

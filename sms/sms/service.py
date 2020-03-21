@@ -7,71 +7,56 @@ from multiprocessing import Process, Pool
 import rock as rk
 
 SMSParser = collections.namedtuple(
-    'SMSParser', ('action', 'topic', 'number', 'message')
+    'SMSParser', ('action', 'number', 'message')
+)
+BlastParser = collections.namedtuple(
+    'SMSParser', ('action', 'topic', 'message')
 )
 MAX_WORKERS = 4
 
 
 def consumer(addr):
     log = rk.utils.logger('sms.service')
-    sns = rk.aws.get_client(
+    sns, topics = rk.aws.get_client(
         'sns', use_session=False, region='us-east-1'
     )
-    topics = collections.OrderedDict()
-    groups = sns.list_topics()['Topics']
-    if groups:
-        for topic in groups:
-            arn = topic['TopicArn']
-            name = arn.split(':')[-1]
-            topics[name] = arn
 
     def send(number, message):
         response = sns.publish(
             PhoneNumber=number,
             Message=message
         )
-        return response
-
-    def subscribe(topic, number):
-        response = sns.subscribe(
-            TopicArn=topics[topic],
-            Protocol="sms",
-            Endpoint=number
-        )
-        return response
+        metadata = response.get("ResponseMetadata")
+        return metadata.get('HTTPStatusCode')
 
     def broadcast(topic, message):
+        name = topic.replace(' ', '')
         response = sns.publish(
-            TopicArn=topics[topic],
+            TopicArn=topics[name],
             Message=message
         )
-        return response
+        metadata = response.get("ResponseMetadata")
+        return metadata.get('HTTPStatusCode')
 
     def handler(message):
-        sms = SMSParser(**rk.msg.unpack(message[-1]))
+        data = rk.msg.unpack(message[-1])
         try:
-            if sms.action == 'send':
-                response = send(sms.number, sms.message)
-            elif sms.action == 'broadcast':
-                response = broadcast(sms.topic, sms.message)
-            elif sms.action == 'subscribe':
-                response = subscribe(sms.topic, sms.number)
+            if data['action'] == 'send':
+                sms = SMSParser(**data)
+                code = send(sms.number, sms.message)
+            elif data['action'] == 'broadcast':
+                sms = BlastParser(**data)
+                code = broadcast(sms.topic, sms.message)
         except Exception as err:
             log.exception(err)
             result = 'failed...'
         else:
-            metadata = response.get("ResponseMetadata")
-            if metadata.get('HTTPStatusCode') == 200:
+            if code == 200:
                 result = 'sent...'
         finally:
             log.info(f'{sms.action} sms {result}')
 
-    ctx = zmq.Context(1)
-    sock = ctx.socket(zmq.PULL)
-    sock.connect(addr)
-    sock.linger = 0
-    sock = ZMQStream(sock)
-    sock.on_recv(handler)
+    ctx, sock = rk.zkit.consumer(addr, handler)
     log.info('consumer started...')
 
     try:
@@ -85,13 +70,6 @@ def consumer(addr):
             ctx.term()
 
 
-def producer(addr):
-    ctx = zmq.Context()
-    sock = ctx.socket(zmq.PUSH)
-    sock.bind(addr)
-    return ctx, sock
-
-
 class SMSService(rk.utils.BaseService):
     _name = b'sms'
     _version = b'0.0.1'
@@ -100,7 +78,7 @@ class SMSService(rk.utils.BaseService):
         super(SMSService, self).__init__(brokers, conf, verbose)
         self._setup_ipc()
 
-        self._ctx, self._producer = producer(self._ipc)
+        self._ctx, self._producer = rk.zkit.producer(self._ipc)
         self._log.info('sms producer started...')
 
         self._consumers = ()
@@ -109,31 +87,30 @@ class SMSService(rk.utils.BaseService):
                 Process(target=consumer, args=(self._ipc,)),
             )
 
-    def __send_request(self, action, topic=None, number=None, message=None):
-        data = rk.msg.pack(dict(
-            action=action, number=number,
-            message=message, topic=topic)
-        )
-        self._producer.send(data)
-        return {
+    def __send_request(self, data):
+        self._producer.send(rk.msg.pack(data))
+        action = data['action']
+        res = {
             'ok': True,
             'details': f'{action} request submitted for processing'
         }
+        return res
 
     def send(self, number, message):
-        return self.__send_request(
-            'send', number=number, message=message
+        data = dict(
+            action='send',
+            number=number,
+            message=message
         )
+        return self.__send_request(data)
 
     def broadcast(self, topic, message):
-        return self.__send_request(
-            'broadcast', topic=topic, message=message
+        data = dict(
+            action='broadcast',
+            topic=topic,
+            message=message
         )
-
-    def subscribe(self, topic, number):
-        return self.__send_request(
-            'subscribe', topic=topic, number=number
-        )
+        return self.__send_request(data)
 
 
 def main():

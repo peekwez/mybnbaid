@@ -4,8 +4,8 @@ ROOT ?= ${CURDIR}
 export
 
 NAME := xyz
-IMAGES := users zones mail sms gateway
-SERVICES := users zones mail sms gateway
+IMAGES := users zones properties mail sms gateway
+SERVICES := users zones properties mail sms gateway
 DEPS := schemaless rock
 
 
@@ -51,8 +51,11 @@ logs:
 	for service in $(SERVICES); \
 	do touch logs/$$service.broker.log logs/$$service.service.log; done
 
+initdb:
+	rock.syncdb -c datastore.yml
+
 supervisor:
-	rock.supervisor -c config.yml
+	rock.supervisor -c services.yml
 
 start: install logs supervisor
 	sleep 5

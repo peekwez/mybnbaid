@@ -6,15 +6,15 @@ run-wheel-builder:
 	$(PROJECT).builder;
 
 build-image:
-	docker build -t $(PROJECT).accounts:$(TAG) -f docker.run .;
+	docker build -t $(PROJECT).cleans:$(TAG) -f docker.run .;
 
 push-image:
-	docker push $(PROJECT).accounts:$(TAG)
+	docker push $(PROJECT).cleans:$(TAG)
 
 install-service:
 	python setup.py install 
 	rm -fr build/ dist/
-	rm -fr mybnbaid_accounts.egg-info
+	rm -fr mybnbaid_cleans.egg-info
 
 start-service:
 	./run.sh

@@ -2,18 +2,17 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='mybnbaid-accounts',
+    name='mybnbaid-cleans',
     version='0.0.1',
-    description='Mybnbaid accounts microservice',
+    description='Mybnbaid cleans microservice',
     packages=find_packages(exclude=['test', 'test.*']),
     entry_points={
-        'console_scripts': ['mybnbaid.accounts=accounts.service:main']
+        'console_scripts': ['mybnbaid.cleans=cleans.service:main']
     },
     install_requires=[
         'rock==0.0.1',
         'schemaless==0.0.1',
         'pyzmq==18.1.0',
-        'tornado==6.0.3'
     ],
     include_package_data=True,
     extras_require={

@@ -1,0 +1,53 @@
+users:
+  recreate: True
+  tables:
+    - users
+    - addresses
+    - blacklists
+  indexes:
+    users:
+      - [email, str]
+    addresses:
+      - [user_id, int64]
+      - [city, str]
+    blacklists:
+      - [user_id, int64]
+
+zones:
+  recreate: True
+  tables:
+    - zones
+  indexes:
+    zones:
+      - [user_id, int64]
+      - [name, str]
+
+properties:
+  recreate: True
+  tables:
+    - properties
+  indexes:
+    properties:
+      - [user_id, int64]
+      - [city, str]
+      - [zone, str]
+
+bookings:
+  recreate: True
+  shard: True
+  tables:
+    - bookings
+  indexes:
+    bookings:
+      - [cleaner_id, int64]
+      - [property_id, int64]
+
+cleans:
+  recreate: True
+  shard: True
+  tables:
+    - cleans
+  indexes:
+    cleans:
+      - [cleaner_id, int64]
+      - [property_id, int64]

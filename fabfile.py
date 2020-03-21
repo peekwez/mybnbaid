@@ -11,6 +11,6 @@ def test(c):
 
 
 @task(hosts=['local'])
-def supervisor(c, conf='config.yml'):
+def supervisor(c, conf='services.yml'):
     c.run('ls')
     print(writer)

@@ -1,4 +1,8 @@
-run-wheel-builder:
+db = schemaless -d zones
+sc = -s zones
+cmd = -c create
+
+un-wheel-builder:
 	docker run --rm \
 	-v "$$(pwd)":/application \
 	-v "$$(pwd)/wheelhouse":/wheelhouse \

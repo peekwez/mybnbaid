@@ -23,10 +23,10 @@ def encrypt(password, salt=None):
     return _passwd.encrypt(password, salt)
 
 
-def create_token_email(action, url, email, token):
+def create_token_email(action, template, url, email, token):
     context = {'action_url': f'{url}/{action}?token={token}'}
-    html = rk.utils.render(_loader, f'{action}.html', context)
-    text = rk.utils.render(_loader, f'{action}.txt', context)
+    html = rk.utils.render(_loader, f'{template}.html', context)
+    text = rk.utils.render(_loader, f'{template}.txt', context)
     data = {
         'token': token,
         'emails': [email],
@@ -56,14 +56,17 @@ def login(user, password):
 
 def request_welcome_email(url, user_id, email):
     token = _token.create('VERIFY', user_id)
-    data = create_token_email('welcome-email', url, email, token)
+    data = create_token_email(
+        'verify-email', 'welcome-email', url, email, token
+    )
     data['subject'] = 'Welcome to mybnbaid!'
     return data
 
 
 def request_verify_email(url, user_id, email):
     token = _token.create('VERIFY', user_id)
-    data = create_token_email('verify-email', url, email, token)
+    data = create_token_email(
+        'verify-email', 'verify-email', url, email, token)
     data['subject'] = 'Verify your email for mybnbaid'
     return data
 
@@ -80,7 +83,9 @@ def request_password_reset(url, db, user_id):
     user = db.update(_schema, 'users', user_id, data)
     token = _token.create('RESET', user_id)
 
-    data = create_token_email('reset-password', url, user['email'], token)
+    data = create_token_email(
+        'reset-password', 'reset-password', url, user['email'], token
+    )
     data['subject'] = 'Change your password for mybnbaid'
     return data
 
