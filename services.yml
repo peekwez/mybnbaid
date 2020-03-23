@@ -4,8 +4,8 @@ brokers:
   users: tcp://127.0.0.1:5555
   zones: tcp://127.0.0.1:5556
   properties: tcp://127.0.0.1:5557
-  #booking: tcp://127.0.0.1:5558
-  #cleans: tcp://127.0.0.1:5559
+  bookings: tcp://127.0.0.1:5558
+  cleans: tcp://127.0.0.1:5559
   mail: tcp://127.0.0.1:6666
   sms: tcp://127.0.0.1:6667
 
@@ -16,24 +16,35 @@ services:
       - mail
       - sms
     workers: 1
+
   zones:
     db: schemaless
     clients:
       - users
     workers: 1
+
   properties:
     db: schemaless
     clients:
       - zones
     workers: 1
-  #booking:
-  #  db: schemaless
-  #  workers: 2
-  #cleans:
-  #  db: schemaless
-  #  workers: 2
+
+  bookings:
+    db: schemaless
+    workers: 2
+    clients:
+      - users
+      - sms
+      - properties
+      - cleans
+
+  cleans:
+    db: schemaless
+    workers: 2
+
   mail:
     workers: 1
+
   sms:
     workers: 1
 

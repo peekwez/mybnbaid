@@ -39,8 +39,8 @@ bookings:
     - bookings
   indexes:
     bookings:
-      - [cleaner_id, int64]
       - [property_id, int64]
+      - [aid_id, int64]
 
 cleans:
   recreate: True
@@ -49,5 +49,5 @@ cleans:
     - cleans
   indexes:
     cleans:
-      - [cleaner_id, int64]
       - [property_id, int64]
+      - [aid_id, int64]

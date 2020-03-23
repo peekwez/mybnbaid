@@ -1,9 +1,4 @@
-import zmq
 import collections
-from zmq.eventloop.zmqstream import ZMQStream
-from tornado import ioloop
-from multiprocessing import Process, Pool
-
 
 import rock as rk
 
@@ -13,55 +8,36 @@ MailParser = collections.namedtuple(
 MAX_WORKERS = 4
 
 
-def consumer(addr):
-    log = rk.utils.logger('mail.service')
-    ses = rk.aws.get_client(
-        'ses', use_session=False,
-        region='us-east-1'
-    )
+def section(name, value):
+    return {name.title(): {'Data': value, 'Charset': 'UTF-8'}}
 
-    def section(name, value):
-        return {name.title(): {
-            'Data': value,
-            'Charset': 'UTF-8'}}
 
-    def handler(message):
-        mail = MailParser(**rk.msg.unpack(message[-1]))
-        try:
-            contents = {
-                **section('subject', mail.subject),
-                'Body': {
-                    **section('text', mail.text),
-                    **section('html', mail.html)
-                }
+class MailConsumer(rk.utils.BaseConsumer):
+    def __init__(self, addr, name):
+        super(MailConsumer, self).__init__(addr, name)
+        self._ses = rk.aws.get_client(
+            'ses', use_session=False, region='us-east-1'
+        )
+
+    def __prep(self, subject, html, text):
+        body = {
+            **section('subject', subject),
+            'Body': {
+                **section('text', text),
+                **section('html', html)
             }
-            response = ses.send_email(
-                Source='no-reply@mybnbaid.com',
-                Destination={'ToAddresses': mail.emails},
-                Message=contents
-            )
-        except Exception as err:
-            log.exception(err)
-            result = 'failed...'
-        else:
-            metadata = response.get("ResponseMetadata")
-            if metadata.get('HTTPStatusCode') == 200:
-                result = 'sent...'
-        finally:
-            log.info(f'{mail.subject} to {mail.emails} {result}')
+        }
+        return body
 
-    ctx, sock = rk.zkit.consumer(addr, handler)
-    log.info('consumer started...')
-
-    try:
-        ioloop.IOLoop.instance().start()
-    except KeyboardInterrupt:
-        log.info('consumer interrupted...')
-    finally:
-        log.info('closing consumer socket...')
-        sock.close()
-        if ctx:
-            ctx.term()
+    def send(self, data):
+        opts = MailParser(**data)
+        body = self.__prep(opts.subject, opts.html, opts.text)
+        response = self._ses.send_email(
+            Source='no-reply@mybnbaid.com',
+            Destination={'ToAddresses': opts.emails},
+            Message=body
+        )
+        return rk.aws.parse_response(response)
 
 
 class MailService(rk.utils.BaseService):
@@ -70,31 +46,13 @@ class MailService(rk.utils.BaseService):
 
     def __init__(self, brokers, conf, verbose):
         super(MailService, self).__init__(brokers, conf, verbose)
-        self._setup_ipc()
-
-        self._ctx, self._producer = rk.zkit.producer(self._ipc)
-        self._log.info('mail producer started...')
-
-        self._consumers = ()
-        for num in range(MAX_WORKERS):
-            self._consumers += (
-                Process(target=consumer, args=(self._ipc,)),
-            )
+        self._setup_events(MailConsumer, MAX_WORKERS)
 
     def send(self, emails, subject, html, text):
-        mail = rk.msg.pack(
-            dict(
-                emails=emails,
-                subject=subject,
-                html=html,
-                text=text
-            )
+        data = dict(
+            emails=emails, subject=subject, html=html, text=text
         )
-        self._producer.send(mail)
-        return {
-            'ok': True,
-            'details': 'email submitted for processing'
-        }
+        return self._emit('send', data)
 
 
 def main():

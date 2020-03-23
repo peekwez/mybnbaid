@@ -1,69 +1,63 @@
 TAG ?=dev
-PROJECT ?=mybnbaid
-ROOT ?=${CURDIR}
+PROJECT =mybnbaid
+ROOT =${CURDIR}
 export
 
 # service variables
-NAME ?=xyz
+SERVICE_NAME ?=xyz
 SERVICES ?=users zones properties mail sms gateway
-DEPS ?=schemaless rock
+LOCAL_LIBS ?=schemaless rock
 
-# AWS secrets manager and JSON parser for response
-JSON =jq -r
-SM_ARGS =SecretString
+# AWS secrets manager variables
 GET_SECRET =aws secretsmanager get-secret-value --secret-id
+PARSE_FIELD =jq -r
+PARSE_SECRET =jq -r ".SecretString"
+SECRET_KEY :=
+SECRET_FIELD :=
 
 # DB secret and connection variables
-KEY ?=DEV_DBS
-FIELD ?=general
-DB ?=testdb
+DB :=
+SCHEMA :=
+TABLE :=
+
 
 include Make.in
 
-.PHONY: secrets logs dependencies 
+.PHONY: secrets logs libs
 
 build: build-images
 
 push: push-images
 
-check-db-config: secrets
-	psql $(DSN) -c "SELECT * FROM public.tables;" 
-	psql $(DSN) -c "SELECT * FROM public.indexes;" 
-
-close-conn:
-	$(call _info, closing connections to $(DB) database)
-	psql $(DSN) -c "SELECT pg_terminate_backend(pid) \
-	FROM pg_stat_activity WHERE datname='$(DB)'"
-
-drop-db:
-	$(call _info, dropping $(DB) database)
-	psql $(DSN) -c "DROP DATABASE IF EXISTS $(DB);"
-
-create-db: secrets closeconn dropdb
-	$(call _info, creating $(DB) database)
-	psql $(DSN) -c "CREATE DATABASE $(DB);"
-
-secrets:
-	$(call _info, fetching secret from aws secrets manager)
-	$(eval DSN = $(shell $(GET_SECRET) $(KEY) | $(JSON) ".$(SM_ARGS)" | $(JSON) ".$(FIELD)"))
-
-create:
-	$(call _info, initializing a service template)
-	rock.service -d $(ROOT) -s $(NAME)
-	chmod a+x $(ROOT)/$(NAME)/run.sh
-	git add $(NAME)/*
-
-dependencies:
-	$(call _info, installing project dependencies)
-	for dep in $(DEPS); \
-	do make -C dependencies/$$dep install;
-	done
-
-install: dependencies
+install: libs
 	$(call _info, installing project services)
 	for service in $(SERVICES); \
 	do make -C $$service install-service; \
 	done
+
+libs:
+	$(call _info, installing project dependencies)
+	for lib in $(LOCAL_LIBS); \
+	do make -C dependencies/$$lib install; \
+	done
+
+supervisor:
+	$(call _info, creating supervisor configuration for services)
+	rock.supervisor -c services.yml
+
+start: install logs supervisor
+	$(call _info, starting service processes)
+	sleep 5
+	supervisord -c supervisord.conf
+
+stop:
+	$(call _info, stopping service processes)
+	supervisorctl stop all
+	supervisorctl shutdown
+
+status:
+	$(call _info, checking status of service processes)
+	supervisorctl status
 
 prune:
 	$(call _info, prunning dangling docker assets)
@@ -83,33 +77,47 @@ compose:
 
 logs:
 	$(call _info, creating log files)
-	rm -fr logs 
-	mkdir logs
+	rm -fr logs && mkdir logs
 	touch logs/supervisord.log logs/access.log logs/error.log
 	for service in $(SERVICES); \
-	do touch logs/$$service.broker.log logs/$$service.service.log; done
+	do touch logs/$$service.broker.log logs/$$service.service.log; \
+	done
 
-initdb:
+init-db:
 	$(call _info, initializing service databases)
 	rock.syncdb -c datastore.yml
 
-supervisor:
-	$(call _info, creating supervisor configuration for services)
-	rock.supervisor -c services.yml
+check-table: secrets
+	$(call _info, checking table $(SCHEMA).$(TABLE) for $(DB) database)
+	psql $(SECRET) -c "SELECT * FROM $(SCHEMA).$(TABLE);"
 
-start: install logs supervisor
-	$(call _info, starting service processes)
-	sleep 5
-	supervisord -c supervisord.conf
+check-config: secrets
+	$(call _info, check schemaless config for $(DB) database)
+	psql $(SECRET) -c "SELECT * FROM public.tables;" 
+	psql $(SECRET) -c "SELECT * FROM public.indexes;" 
 
-stop:
-	$(call _info, stopping service processes)
-	supervisorctl -u mybnbaid -p password stop all
-	supervisorctl -u mybnbaid -p password shutdown
+close-cons:
+	$(call _info, closing connections to $(DB) database)
+	psql $(SECRET) -c "SELECT pg_terminate_backend(pid) \
+	FROM pg_stat_activity WHERE datname='$(DB)'"
 
-status:
-	$(call _info, checking status of service processes)
-	supervisorctl -u mybnbaid -p password status
+drop-db:
+	$(call _info, dropping $(DB) database)
+	psql $(SECRET) -c "DROP DATABASE IF EXISTS $(DB);"
+
+create-db: secrets close-cons drop-db
+	$(call _info, creating $(DB) database)
+	psql $(SECRET) -c "CREATE DATABASE $(DB);"
+
+secrets:
+	$(call _info, fetching secret from aws secrets manager)
+	$(eval SECRET = $(shell $(GET_SECRET) $(SECRET_KEY) | $(PARSE_SECRET) | $(PARSE_FIELD) ".$(SECRET_FIELD)"))
+
+create-service:
+	$(call _info, initializing a service template)
+	rock.service -d $(ROOT) -s $(SERVICE_NAME)
+	chmod a+x $(ROOT)/$(SERVICE_NAME)/run.sh
+	git add $(SERVICE_NAME)/*
 
 build-base:
 	$(call _info, building base docker image)

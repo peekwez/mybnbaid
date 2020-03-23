@@ -26,24 +26,14 @@ class UsersService(rk.utils.BaseService):
         except IndexError as err:
             return None
 
-    def __send_mail(self, data):
-        mail = rk.msg.prepare('send', data)
-        res = self._clients['mail'].send(b'mail', mail)
-        return res
-
-    def __send_sms(self, action, data):
-        sms = rk.msg.prepare(action, data)
-        res = self._clients['sms'].send(b'sms', sms)
-        return res
-
     def create_user(self, email, password):
         user = self.__find_by_email(email)
         if user:
             raise exc.EmailTaken('email address is taken')
 
-        data = {"email": email}
+        data = dict(email=email)  # {"email": email}
         salt, hashed = _auth.encrypt(password)
-        data.update({'salt': salt, 'password': hashed})
+        data.update(dict(salt=salt, password=hashed))
 
         user = self._db.create(_schema, 'users', data)
         user = _auth.login(user, password)
@@ -52,43 +42,39 @@ class UsersService(rk.utils.BaseService):
             _url, user['id'], user['email']
         )
         token = data.pop('token')
-        res = self.__send_mail(data)
+        res = self._send(b'mail', 'send', data)
 
         user['verify_token'] = token
         return strip_sensitive(user)
 
     def set_name(self, user_id, first_name, last_name):
-        data = {
-            'first_name': first_name,
-            'last_name': last_name
-        }
+        data = dict(first_name=first_name, last_name=last_name)
         user = self._db.update(_schema, 'users', user_id, data)
         return strip_sensitive(user)
 
     def set_phone_number(self, user_id, phone_number):
-        data = {'phone_number': phone_number}
+        data = dict(phone_number=phone_number)
         user = self._db.update(_schema, 'users', user_id, data)
-        data = {
-            'message': 'Welcome to mybnbaid!',
-            'number': phone_number
-        }
-        res = self.__send_sms('send', data)
+        data = dict(
+            message='Welcome to mybnbaid!',
+            number=phone_number
+        )
+        res = self._send(b'sms', 'send', data)
         return strip_sensitive(user)
 
     def create_address(self, user_id, street, city, postcode, country):
-        data = {
-            'user_id': user_id, 'street': street,
-            'city': city, 'postcode': postcode,
-            'country': country
-        }
+        data = dict(
+            user_id=user_id, street=street, city=city,
+            postcode=postcode, country=country
+        )
         address = self._db.create(_schema, 'addresses', data)
         return address
 
     def update_address(self, user_id, addr_id, street, city, postcode, country):
-        data = {
-            'street': street, 'city': city,
-            'postcode': postcode, 'country': country
-        }
+        data = dict(
+            street=street, city=city,
+            postcode=postcode, country=country
+        )
         address = self._db.update(
             _schema, 'addresses', addr_id, data
         )
@@ -96,7 +82,7 @@ class UsersService(rk.utils.BaseService):
 
     def list_address(self, user_id, limit=20, offset=0):
         params = (("user_id",), (user_id,))
-        kwargs = {'offset': offset, 'limit': limit}
+        kwargs = dict(offset=offset, limit=limit)
         addresses = self._db.filter(
             _schema, 'addresses', params, **kwargs
         )
@@ -107,7 +93,7 @@ class UsersService(rk.utils.BaseService):
         return {}
 
     def delete_user(self, user_id):
-        data = {'disabled': True}
+        data = dict(disabled=True)
         self._db.update(_schema, 'users', user_id, data)
         return {}
 
@@ -123,8 +109,8 @@ class UsersService(rk.utils.BaseService):
 
         data = _auth.request_verify_email(_url, user_id, user['email'])
         token = data.pop('token')
-        res = self.__send_mail(data)
-        return {'token': token}
+        res = self._send(b'mail', 'send', data)
+        return dict(token=token)
 
     def set_email_verified(self, token):
         data = _auth.verify_email(self._db, token)
@@ -136,17 +122,16 @@ class UsersService(rk.utils.BaseService):
             raise exc.UserNotFound('user does not exist')
         data = _auth.request_password_reset(_url, self._db, user['id'])
         token = data.pop('token')
-        res = self.__send_mail(data)
-        return {'token': token}
+        res = self._send(b'mail', 'send', data)
+        return dict(token=token)
 
     def reset_password(self, token, password):
         passed = _auth.reset_password(self._db, token, password)
-        return {'passed': True}
+        return dict(passed=True)
 
     def get_phone_number(self, user_id):
         user = self._db.get(_schema, 'users', user_id)
-        res = {'phone_number': user.get('phone_number')}
-        return res
+        return dict(phone_number=user.get('phone_number'))
 
 
 def main():

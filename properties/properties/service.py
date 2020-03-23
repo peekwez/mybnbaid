@@ -13,7 +13,7 @@ class PropertiesService(rk.utils.BaseService):
         args = {'user_id': user_id, 'fsa': postcode[:3]}
         req = rk.msg.prepare('get_region', args)
         zone = rk.msg.unpack(
-            self._clients['zones'].send(b'zones', req)[-1]
+            self._clients[b'zones'].send(b'zones', req)[-1]
         )
         data = {
             'user_id': user_id, 'street': street,
