@@ -46,7 +46,9 @@ class MailService(rk.utils.BaseService):
 
     def __init__(self, brokers, conf, verbose):
         super(MailService, self).__init__(brokers, conf, verbose)
-        self._setup_events(MailConsumer, MAX_WORKERS)
+        self._setup_events(
+            (rk.utils.BaseProducer,), (MailConsumer,), MAX_WORKERS
+        )
 
     def send(self, emails, subject, html, text):
         data = dict(

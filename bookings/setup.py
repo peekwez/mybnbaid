@@ -13,6 +13,7 @@ setup(
         'rock==0.0.1',
         'schemaless==0.0.1',
         'pyzmq==18.1.0',
+        'arrow==0.15.2'
     ],
     include_package_data=True,
     extras_require={

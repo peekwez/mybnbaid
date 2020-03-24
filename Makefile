@@ -5,7 +5,7 @@ export
 
 # service variables
 SERVICE_NAME ?=xyz
-SERVICES ?=users zones properties mail sms gateway
+SERVICES ?=users zones properties bookings cleans mail sms gateway
 LOCAL_LIBS ?=schemaless rock
 
 # AWS secrets manager variables

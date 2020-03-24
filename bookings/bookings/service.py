@@ -1,32 +1,32 @@
-# create a materialized view for each region with no data --NO DATA
-# this materialized view is for all opened cleans
 import collections
+import functools
+import time
 import arrow
+
 import rock as rk
 
 from . import exceptions as exc
 from . import text as txt
 
 ViewParser = collections.namedtuple(
-    'ViewParser', ('zone',)
+    'ViewParser', ('schema',)
 )
 MAX_WORKERS = 4
 
 
 class BookingsConsumer(rk.utils.BaseConsumer):
-    def __init__(self, addr, name, db):
-        super(ZonesConsumer, self).__init__(addr, name)
+    def __init__(self, db, addr, name):
+        super(BookingsConsumer, self).__init__(addr, name)
         dsn = rk.aws.get_db_secret(name)
         self._db = rk.utils.DB[db](dsn)
 
     def create(self, data):
         opts = ViewParser(**data)
-        params = (('aid_id',)(0,))
+        params = (('aid_id',), (0,))
         res = self._db.create_view(
             opts.schema, 'bookings', params
         )
-        code = 200 if res else 400
-        return code
+        return 200 if res else 400
 
     def refresh(self, data):
         opts = ViewParser(**data)
@@ -34,8 +34,39 @@ class BookingsConsumer(rk.utils.BaseConsumer):
         res = self._db.refresh_view(
             opts.schema, 'bookings', fields
         )
-        code = 200 if res else 400
-        return code
+        return 200 if res else 400
+
+
+class BookingsProducer(rk.utils.BaseProducer):
+    __slots__ = ('_schemas')
+    PERIODIC = True
+    TASK_INTERVAL = 60
+
+    def __init__(self, schemas, addr, name):
+        super(BookingsProducer, self).__init__(addr, name)
+        self._schemas = schemas
+
+    def send(self, event):
+        for schema in self._schemas:
+            payload = dict(event=event, data=dict(schema=schema))
+            _ = self.push(payload)
+
+    def __call__(self):
+        update_time = time.time()
+        self.send('create')
+        try:
+            while True:
+                current_time = time.time()
+                if current_time - update_time > self.TASK_INTERVAL:
+                    self.send('refresh')
+                    update_time = current_time
+        except KeyboardInterrupt:
+            self._log.info('periodic producer interrupted')
+        finally:
+            self.close()
+
+    def __exit__(self, type, value, traceback):
+        self.close()
 
 
 class BookingsService(rk.utils.BaseService):
@@ -44,6 +75,11 @@ class BookingsService(rk.utils.BaseService):
 
     def __init__(self, brokers, conf, verbose):
         super(BookingsService, self).__init__(brokers, conf, verbose)
+        self._setup_events(
+            (BookingsProducer, self._db.schemas),
+            (BookingsConsumer, conf.get('db')),
+            MAX_WORKERS
+        )
 
     def _send_sms(self, user, clean, template):
         if user == 'host':
@@ -125,3 +161,38 @@ class BookingsService(rk.utils.BaseService):
         res = self._send_sms('host', clean, txt.COMPLETED)
         res = self._db.delete(zone, 'bookings', clean_id)
         return clean
+
+    def get_clean(self, user_id, zone, clean_id):
+        clean = self._db.get(zone, 'bookings', clean_id)
+        return clean
+
+    def get_zone_cleans(self, user_id, zone, limit=20, offset=0):
+        kwargs = dict(offset=offset, limit=limit)
+        cleans = self._db.fetch_view(
+            zone, 'bookings', ('aid_id',), **kwargs
+        )
+        return cleans
+
+    def get_aid_cleans(self, user_id, zone, limit=20, offset=0):
+        params = (('aid_id',), (user_id,))
+        kwargs = dict(offset=offset, limit=limit)
+        cleans = self._db.filter(zone, 'bookings', params, **kwargs)
+        return cleans
+
+    def get_property_cleans(self, user_id, zone, property_id, limit=20, offset=0):
+        params = (('property_id',), (property_id,))
+        kwargs = dict(offset=offset, limit=limit)
+        cleans = self._db.filter(zone, 'bookings', params, **kwargs)
+        return cleans
+
+
+def main():
+    verbose = rk.utils.parse_config('verbose') == True
+    brokers = rk.utils.parse_config('brokers')
+    conf = rk.utils.parse_config('services')['bookings']
+    with BookingsService(brokers, conf, verbose) as service:
+        service()
+
+
+if __name__ == "__main__":
+    main()

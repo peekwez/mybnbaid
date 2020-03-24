@@ -10,18 +10,14 @@ class PropertiesService(rk.utils.BaseService):
     _version = b'0.0.1'
 
     def __property(self, user_id, street, city, postcode, country, bedrooms, washrooms, size):
-        args = {'user_id': user_id, 'fsa': postcode[:3]}
-        req = rk.msg.prepare('get_region', args)
-        zone = rk.msg.unpack(
-            self._clients[b'zones'].send(b'zones', req)[-1]
+        data = dict(user_id=user_id, fsa=postcode[:3])
+        zone = self._send(b'zones', 'get_region', data)
+        data = dict(
+            user_id=user_id, street=street, city=city,
+            postcode=postcode, country=country,
+            bedrooms=bedrooms, washrooms=washrooms,
+            size=size, zone=zone['region']
         )
-        data = {
-            'user_id': user_id, 'street': street,
-            'city': city, 'postcode': postcode,
-            'country': country, 'bedrooms': bedrooms,
-            'washrooms': washrooms, 'size': size,
-            'zone': zone['region']
-        }
         return data
 
     def add_property(self, user_id, **kwargs):
@@ -40,9 +36,8 @@ class PropertiesService(rk.utils.BaseService):
 
     def list_properties(self, user_id, limit=20, offset=0):
         params = (('user_id',), (user_id,))
-        kwargs = {'offset': offset, 'limit': limit}
-        props = self._db.filter(
-            _schema, 'properties', params)
+        kwargs = dict(offset=offset, limit=limit)
+        props = self._db.filter(schema, 'properties', params)
         return props
 
     def delete_property(self, user_id, property_id):

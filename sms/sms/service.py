@@ -42,7 +42,9 @@ class SMSService(rk.utils.BaseService):
 
     def __init__(self, brokers, conf, verbose):
         super(SMSService, self).__init__(brokers, conf, verbose)
-        self._setup_events(SMSConsumer, MAX_WORKERS)
+        self._setup_events(
+            (rk.utils.BaseProducer,), (SMSConsumer,), MAX_WORKERS
+        )
 
     def send(self, number, message):
         data = dict(number=number, message=message)

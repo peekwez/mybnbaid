@@ -22,7 +22,7 @@ def strip_arn(zone, fields=('subscription_arn',)):
 
 
 class ZonesConsumer(rk.utils.BaseConsumer):
-    def __init__(self, addr, name, db):
+    def __init__(self, db, addr, name):
         super(ZonesConsumer, self).__init__(addr, name)
         self._sns, self._topics = rk.aws.get_client(
             'sns', use_session=False, region='us-east-1'
@@ -66,7 +66,9 @@ class ZonesService(rk.utils.BaseService):
         self._mem = store.ZonesStore()  # sqlite in memory store
         self.__update_topics()
         self._setup_events(
-            ZonesConsumer, MAX_WORKERS, db=conf.get('db')
+            (rk.utils.BaseProducer,),
+            (ZonesConsumer, conf.get('db')),
+            MAX_WORKERS
         )
 
     def __exit__(self, type, value, traceback):
