@@ -5,7 +5,7 @@ import rock as rk
 MailParser = collections.namedtuple(
     'MailParser', ('subject', 'emails', 'html', 'text')
 )
-MAX_WORKERS = 4
+MAX_WORKERS = 2
 
 
 def section(name, value):

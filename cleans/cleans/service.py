@@ -45,3 +45,15 @@ class CleansService(rk.utils.BaseService):
         kwargs = dict(offset=offset, limit=limit)
         cleans = self._db.filter(zone, 'cleans', params, **kwargs)
         return cleans
+
+
+def main():
+    verbose = rk.utils.parse_config('verbose') == True
+    brokers = rk.utils.parse_config('brokers')
+    conf = rk.utils.parse_config('services')['cleans']
+    with CleansService(brokers, conf, verbose) as service:
+        service()
+
+
+if __name__ == "__main__":
+    main()

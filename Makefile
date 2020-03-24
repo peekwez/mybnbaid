@@ -96,7 +96,7 @@ check-config: secrets
 	psql $(SECRET) -c "SELECT * FROM public.tables;" 
 	psql $(SECRET) -c "SELECT * FROM public.indexes;" 
 
-close-cons:
+close-cons: secrets
 	$(call _info, closing connections to $(DB) database)
 	psql $(SECRET) -c "SELECT pg_terminate_backend(pid) \
 	FROM pg_stat_activity WHERE datname='$(DB)'"

@@ -31,7 +31,7 @@ services:
 
   bookings:
     db: schemaless
-    workers: 2
+    workers: 1
     clients:
       - users
       - sms
@@ -40,7 +40,7 @@ services:
 
   cleans:
     db: schemaless
-    workers: 2
+    workers: 1
 
   mail:
     workers: 1
@@ -49,4 +49,4 @@ services:
     workers: 1
 
 gateway:
-  workers: 4
+  workers: 2

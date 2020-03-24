@@ -5,20 +5,25 @@ import arrow
 
 import rock as rk
 
+from . import db as db
 from . import exceptions as exc
 from . import text as txt
 
 ViewParser = collections.namedtuple(
     'ViewParser', ('schema',)
 )
-MAX_WORKERS = 4
+MAX_WORKERS = 2
+
+
+def setup_database(name):
+    dsn = rk.aws.get_db_secret(name)
+    return db.client.PGViewClient(dsn)
 
 
 class BookingsConsumer(rk.utils.BaseConsumer):
-    def __init__(self, db, addr, name):
+    def __init__(self, addr, name):
         super(BookingsConsumer, self).__init__(addr, name)
-        dsn = rk.aws.get_db_secret(name)
-        self._db = rk.utils.DB[db](dsn)
+        self._db = setup_database(name)
 
     def create(self, data):
         opts = ViewParser(**data)
@@ -75,11 +80,15 @@ class BookingsService(rk.utils.BaseService):
 
     def __init__(self, brokers, conf, verbose):
         super(BookingsService, self).__init__(brokers, conf, verbose)
+        schemas = self._db.schemas
         self._setup_events(
-            (BookingsProducer, self._db.schemas),
-            (BookingsConsumer, conf.get('db')),
+            (BookingsProducer, schemas),
+            (BookingsConsumer,),
             MAX_WORKERS
         )
+
+    def _setup_db(self, client=None):
+        self._db = setup_database(str(self))
 
     def _send_sms(self, user, clean, template):
         if user == 'host':

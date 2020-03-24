@@ -8,7 +8,7 @@ SMSParser = collections.namedtuple(
 BroadcastParser = collections.namedtuple(
     'SMSParser', ('topic', 'message')
 )
-MAX_WORKERS = 4
+MAX_WORKERS = 2
 
 
 class SMSConsumer(rk.utils.BaseConsumer):
