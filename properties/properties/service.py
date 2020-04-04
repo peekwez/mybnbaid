@@ -5,13 +5,20 @@ from . import exceptions as exc
 _schema = 'properties'
 
 
-class PropertiesService(rk.utils.BaseService):
-    _name = b'properties'
-    _version = b'0.0.1'
+class PropertiesService(rk.svc.BaseService):
+    _name = 'properties'
+    _version = '0.0.1'
+    _zones_rpc = None
 
-    def __property(self, user_id, street, city, postcode, country, bedrooms, washrooms, size):
-        data = dict(user_id=user_id, fsa=postcode[:3])
-        zone = self._send(b'zones', 'get_region', data)
+    def _setup_clients(self, broker, verbose):
+        self._zones_rpc = rk.rpc.RpcProxy(
+            broker, 'zones', verbose
+        )
+
+    def _parse(self, user_id, street, city, postcode, country, bedrooms, washrooms, size):
+        zone = self._zones_rpc.get_region(
+            user_id=user_id, fsa=postcode[:3]
+        )
         data = dict(
             user_id=user_id, street=street, city=city,
             postcode=postcode, country=country,
@@ -21,35 +28,33 @@ class PropertiesService(rk.utils.BaseService):
         return data
 
     def add_property(self, user_id, **kwargs):
-        data = self.__property(user_id, **kwargs)
-        prop = self._db.create(_schema, 'properties', data)
+        data = self._parse(user_id, **kwargs)
+        prop = self._repo.put(_schema, 'properties', data)
         return prop
 
     def update_property(self, user_id, property_id, **kwargs):
-        data = self.__property(user_id, **kwargs)
-        prop = self._db.update(_schema, 'properties', property_id, data)
+        data = self._parse(user_id, **kwargs)
+        prop = self._repo.edit(_schema, 'properties', property_id, data)
         return prop
 
     def get_property(self, user_id, property_id):
-        prop = self._db.get(_schema, 'properties', property_id)
+        prop = self._repo.get(_schema, 'properties', property_id)
         return prop
 
     def list_properties(self, user_id, limit=20, offset=0):
         params = (('user_id',), (user_id,))
         kwargs = dict(offset=offset, limit=limit)
-        props = self._db.filter(schema, 'properties', params)
+        props = self._repo.filter(_schema, 'properties', params)
         return props
 
     def delete_property(self, user_id, property_id):
-        self._db.delete(_schema, 'properties', property_id)
+        self._repo.drop(_schema, 'properties', property_id)
         return {}
 
 
 def main():
-    verbose = rk.utils.parse_config('verbose') == True
-    brokers = rk.utils.parse_config('brokers')
-    conf = rk.utils.parse_config('services')['properties']
-    with PropertiesService(brokers, conf, verbose) as service:
+    cfg = rk.utils.parse_config()
+    with PropertiesService(cfg) as service:
         service()
 
 

@@ -5,7 +5,7 @@ export
 
 # service variables
 SERVICE_NAME ?=xyz
-SERVICES ?=users zones properties bookings cleans mail sms gateway
+SERVICES ?=mail sms users zones properties bookings cleans gateway
 LOCAL_LIBS ?=schemaless rock
 
 # AWS secrets manager variables
@@ -29,6 +29,12 @@ build: build-images
 
 push: push-images
 
+persistence:
+	$(call _info, starting persistence layers)
+	docker-compose -f test-compose.yml rm -f schemaless memstore redstore
+	docker-compose -f test-compose.yml stop schemaless memstore redstore
+	docker-compose -f test-compose.yml up -d --remove-orphans schemaless memstore redstore
+
 install: libs
 	$(call _info, installing project services)
 	for service in $(SERVICES); \
@@ -43,7 +49,7 @@ libs:
 
 supervisor:
 	$(call _info, creating supervisor configuration for services)
-	rock.supervisor -c services.yml
+	rock.supervisor -c config.yml
 
 start: install logs supervisor
 	$(call _info, starting service processes)
@@ -78,10 +84,11 @@ compose:
 logs:
 	$(call _info, creating log files)
 	rm -fr logs && mkdir logs
-	touch logs/supervisord.log logs/access.log logs/error.log
+	touch logs/supervisor.log \
+		logs/broker.logs logs/access.log \
+		logs/error.log
 	for service in $(SERVICES); \
-	do touch logs/$$service.broker.log logs/$$service.service.log; \
-	done
+	do touch logs/$$service.log; done
 
 init-db:
 	$(call _info, initializing service databases)
@@ -96,7 +103,7 @@ check-config: secrets
 	psql $(SECRET) -c "SELECT * FROM public.tables;" 
 	psql $(SECRET) -c "SELECT * FROM public.indexes;" 
 
-close-cons: secrets
+close-cons: secrets 
 	$(call _info, closing connections to $(DB) database)
 	psql $(SECRET) -c "SELECT pg_terminate_backend(pid) \
 	FROM pg_stat_activity WHERE datname='$(DB)'"
@@ -105,13 +112,18 @@ drop-db:
 	$(call _info, dropping $(DB) database)
 	psql $(SECRET) -c "DROP DATABASE IF EXISTS $(DB);"
 
-create-db: secrets close-cons drop-db
+create-db: close-cons drop-db
 	$(call _info, creating $(DB) database)
 	psql $(SECRET) -c "CREATE DATABASE $(DB);"
 
 secrets:
 	$(call _info, fetching secret from aws secrets manager)
 	$(eval SECRET = $(shell $(GET_SECRET) $(SECRET_KEY) | $(PARSE_SECRET) | $(PARSE_FIELD) ".$(SECRET_FIELD)"))
+
+upload-secrets:
+	$(call _info, uploading secrets folder to aws s3)
+	aws s3 cp secrets/development s3://mybnbaid/secrets/development --recursive
+	aws s3 cp secrets/production s3://mybnbaid/secrets/production --recursive
 
 create-service:
 	$(call _info, initializing a service template)

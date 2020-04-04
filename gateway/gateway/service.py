@@ -13,14 +13,14 @@ from .handlers.clients import (
 enable_pretty_logging()
 
 
-def init(brokers, handlers, verbose):
-    # inject asynchronous major domo into class handlers
+def initialize(broker, handlers, verbose):
+    # inject asynchronous RpcProxy for services
     for _, handler in handlers:
         try:
-            service = handler._service.decode('utf-8')
-            if handler._client == None:
-                handler._client = rk.mdp.aclient.MajorDomoClient(
-                    brokers[service], handler._service, verbose
+            service = handler._service
+            if handler._rpc_client == None:
+                handler._rpc_client = rk.rpc.AsyncRpcProxy(
+                    broker, handler._service, verbose
                 )
         except AttributeError:
             pass
@@ -37,7 +37,7 @@ def main():
     parser.add_argument(
         '-c', '--config', dest='config',
         help='configuration with services available',
-        default='services.yml'
+        default='config.yml'
     )
     opts = parser.parse_args()
     conf = rk.utils.read_config(opts.config)
@@ -64,7 +64,8 @@ def main():
     ]
 
     # initialize clients
-    init(conf['brokers'], handlers, conf.get('verbose') == True)
+    verbose = conf.get('verbose', None)
+    initialize(conf['broker'], handlers, verbose == True)
 
     # initialize and run app
     app = web.Application(handlers)

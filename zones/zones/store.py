@@ -100,3 +100,6 @@ class ZonesStore(object):
         self._cur.execute(_all())
         data = [dict(row) for row in self._cur.fetchall()]
         return {'items': data}
+
+
+memdata = ZoneStore()

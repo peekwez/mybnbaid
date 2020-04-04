@@ -1,5 +1,3 @@
-import collections
-
 import rock as rk
 
 from . import exceptions as exc
@@ -7,12 +5,6 @@ from . import store as store
 
 _schema = 'zones'
 
-SNSParser = collections.namedtuple(
-    'SNSParser', ('topic', 'number', 'zone_id')
-)
-ARNParser = collections.namedtuple(
-    'ARNParser', ('arn',)
-)
 MAX_WORKERS = 2
 
 
@@ -21,77 +13,73 @@ def strip_arn(zone, fields=('subscription_arn',)):
     return zone
 
 
-class ZonesConsumer(rk.utils.BaseConsumer):
-    def __init__(self, db, addr, name):
-        super(ZonesConsumer, self).__init__(addr, name)
-        self._sns, self._topics = rk.aws.get_client(
-            'sns', use_session=False, region='us-east-1'
-        )
-        dsn = rk.aws.get_db_secret(name)
-        self._db = rk.utils.DB[db](dsn)
+class Tasks(rk.svc.BaseTasks):
+    def __init__(self, sns, topics, repo):
+        self._sns = sns
+        self._topics = topics
+        self._repo = repo
 
-    def subscribe(self, data):
-        opts = SNSParser(**data)
-        name = opts.topic.replace(' ', '')
+    def subscribe_number(self, data):
+        name = data['topic'].replace(' ', '')
         response = self._sns.subscribe(
             TopicArn=self._topics[name],
-            Endpoint=opts.number,
+            Endpoint=data['number'],
             Protocol='sms'
         )
-        code, arn = rk.aws.parse_response(
+        code, arn = rk.utils.parse_response(
             response, extras=['SubscriptionArn']
         )
         if code == 200 and arn:
             data = {'subscription_arn': arn}
-            zone = self._db.update(
-                _schema, 'zones', opts.zone_id, data
+            zone = self._repo.edit(
+                _schema, 'zones', data['zone_id'], data
             )
 
-        return code
-
-    def unsubscribe(self, data):
-        opts = ARNParser(**data)
+    def unsubscribe_number(self, data):
         response = self._sns.unsubscribe(
-            SubscriptionArn=opts.arn
+            SubscriptionArn=data['arn']
         )
-        return rk.aws.parse_response(response)
 
 
-class ZonesService(rk.utils.BaseService):
-    _name = b'zones'
-    _version = b'0.0.1'
+class ZonesService(rk.svc.BaseService):
+    _name = 'zones'
+    _version = '0.0.1'
+    _users_rpc = None
 
-    def __init__(self, brokers, conf, verbose):
-        super(ZonesService, self).__init__(brokers, conf, verbose)
-        self._mem = store.ZonesStore()  # sqlite in memory store
-        self.__update_topics()
-        self._setup_events(
-            (rk.utils.BaseProducer,),
-            (ZonesConsumer, conf.get('db')),
-            MAX_WORKERS
+    def __init__(self, conf):
+        super(ZonesService, self).__init__(conf)
+        sns, topics = self._sas.get_client('sns', region='us-east-1')
+        self._update_topics(sns, topics)
+        self._setup_tasks(
+            Tasks(sns, topics, self._repo),
+            MAX_WORKERS,
         )
 
     def __exit__(self, type, value, traceback):
-        self._mem.close()
+        store.memdata.close()
         super(ZonesService, self).__exit__(type, value, traceback)
 
-    def __update_topics(self):
-        sns, topics = rk.aws.get_client(
-            'sns', use_session=False, region='us-east-1'
+    def _setup_clients(self, broker, verbose):
+        self._users_rpc = rk.rpc.RpcProxy(
+            broker, 'users', verbose
         )
+
+    def _update_topics(self, sns, topics):
         zones = self.get_regions(user_id=b'zones')['items']
         current = set(topics.keys())
         update = {zone['region'] for zone in zones}
         latest = update - current
         for topic in latest:
-            arn = self.__create_topic(sns, topic)
+            arn = self._create_topic(sns, topic)
         self._log.info('zone topics are up to date')
 
-    def __create_topic(self, sns, topic):
+    def _create_topic(self, sns, topic):
         name = topic.replace(' ', '')
         try:
             kwargs = {'DisplayName': topic}
-            res = sns.create_topic(Name=name, Attributes=kwargs)
+            res = sns.create_topic(
+                Name=name, Attributes=kwargs
+            )
         except Exception as err:
             self._log.exception(err)
             return None
@@ -99,66 +87,64 @@ class ZonesService(rk.utils.BaseService):
             return res['TopicArn']
 
     def add_zone(self, user_id, region):
-        data = {'user_id': user_id}
-        user = self._send(b'users', 'get_phone_number', data)
+        user = self._users_rpc.get_phone_number(
+            user_id=user_id
+        )
         if not user.get('phone_number'):
             raise ZoneError('phone number required to add zones')
 
-        data['name'] = region
-        zone = self._db.create(_schema, 'zones', data)
+        data = dict(user_id=user_id, name=region)
+        zone = self._repo.put(_schema, 'zones', data)
         data = dict(
             topic=region, number=user['phone_number'],
             zone_id=zone['id']
         )
-
-        res = self._emit('subscribe', data)
+        res = self._emit('subscribe:number', data)
         return zone
 
     def get_zone(self, user_id, zone_id):
-        zone = self._db.get(_schema, 'zones', zone_id)
+        zone = self._repo.get(_schema, 'zones', zone_id)
         return strip_arn(zone)
 
     def list_zones(self, user_id, limit=20, offset=0):
         params = (('user_id',), (user_id,))
         kwargs = dict(offset=offset, limit=limit)
-        zones = self._db.filter(_schema, 'zones', params, **kwargs)
+        zones = self._repo.filter(_schema, 'zones', params, **kwargs)
         items = [strip_arn(zone) for zone in zones['items']]
         zones['items'] = items
         return zones
 
     def delete_zone(self, user_id, zone_id):
-        zone = self._db.get(_schema, 'zones', zone_id)
+        zone = self._repo.get(_schema, 'zones', zone_id)
         arn = zone.get('subscription_arn', None)
         if arn:
             data = dict(arn=arn)
-            res = self._emit('unsubscribe', data)
-        self._db.delete(_schema, 'zones', zone_id)
+            res = self._emit('unsubscribe:number', data)
+        self._repo.drop(_schema, 'zones', zone_id)
         return {}
 
     def get_location(self, user_id, fsa):
-        return self._mem.location(fsa)
+        return store.memdata.location(fsa)
 
     def get_city(self, user_id, fsa):
-        return self._mem.city(fsa)
+        return store.memdata.city(fsa)
 
     def get_region(self, user_id, fsa):
-        return self._mem.region(fsa)
+        return store.memdata.region(fsa)
 
     def get_locations(self, user_id):
-        return self._mem.locations()
+        return store.memdata.locations()
 
     def get_cities(self, user_id):
-        return self._mem.cities()
+        return store.memdata.cities()
 
     def get_regions(self, user_id):
-        return self._mem.regions()
+        return store.memdata.regions()
 
 
 def main():
-    verbose = rk.utils.parse_config('verbose') == True
-    brokers = rk.utils.parse_config('brokers')
-    conf = rk.utils.parse_config('services')['zones']
-    with ZonesService(brokers, conf, verbose) as service:
+    conf = rk.utils.parse_config()
+    with ZonesService(conf) as service:
         service()
 
 

@@ -18,7 +18,7 @@ class BaseHandler(web.RequestHandler):
         max_workers=MAX_WORKERS
     )
     _map = mapping.urls
-    _client = None
+    _rpc_client = None
     _service = None
 
     def prepare(self):
@@ -36,20 +36,10 @@ class BaseHandler(web.RequestHandler):
 
     @run_on_executor
     def process_request(self):
-        method = self._map[self.uri]
-        message = rk.msg.prepare(method, self.data)
-        self._client.send(self._service, message)
-        response = False
-        while not response:
-            try:
-                reply = self._client.recv()
-            except KeyboardInterrupt:
-                break
-            else:
-                if reply is None:
-                    break
-                response = True
-        return rk.msg.unpack(reply[-1])
+        rpc_method = getattr(
+            self._rpc_client, self._map[self.uri]
+        )
+        return rpc_method(**self.data)
 
     @gen.coroutine
     def post(self):

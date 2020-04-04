@@ -1,7 +1,7 @@
 import rock as rk
 
 from . import exceptions as exc
-from . import authentication as _auth
+from . import authentication as auth
 
 _schema = 'users'
 _sensitive = ('id', 'password', 'salt', 'reset_password')
@@ -13,12 +13,22 @@ def strip_sensitive(user, fields=_sensitive):
     return user
 
 
-class UsersService(rk.utils.BaseService):
-    _name = b'users'
-    _version = b'0.0.1'
+class UsersService(rk.svc.BaseService):
+    _name = 'users'
+    _version = '0.0.1'
+    _auth = None
+    _mail_rpc = None
+    _sms_prc = None
 
-    def __find_by_email(self, email):
-        items = self._db.filter(
+    def _setup_clients(self, broker, verbose):
+        self._mail_rpc = rk.rpc.RpcProxy(broker, 'mail', verbose)
+        self._sms_rpc = rk.rpc.RpcProxy(broker, 'sms', verbose)
+
+    def _setup_auth(self, secrets):
+        self._auth = auth.AuthDependency(_schema, secrets)
+
+    def _find_by_email(self, email):
+        items = self._repo.filter(
             _schema, 'users', (('email',), (email,))
         )['items']
         try:
@@ -27,39 +37,36 @@ class UsersService(rk.utils.BaseService):
             return None
 
     def create_user(self, email, password):
-        user = self.__find_by_email(email)
+        user = self._find_by_email(email)
         if user:
             raise exc.EmailTaken('email address is taken')
 
-        data = dict(email=email)  # {"email": email}
-        salt, hashed = _auth.encrypt(password)
+        data = dict(email=email)
+        salt, hashed = self._auth.encrypt(password)
         data.update(dict(salt=salt, password=hashed))
 
-        user = self._db.create(_schema, 'users', data)
-        user = _auth.login(user, password)
-
-        data = _auth.request_welcome_email(
+        user = self._repo.put(_schema, 'users', data)
+        user = self._auth.login(user, password)
+        data = self._auth.request_welcome_email(
             _url, user['id'], user['email']
         )
         token = data.pop('token')
-        res = self._send(b'mail', 'send', data)
-
+        res = self._mail_rpc.send(**data)
         user['verify_token'] = token
         return strip_sensitive(user)
 
     def set_name(self, user_id, first_name, last_name):
         data = dict(first_name=first_name, last_name=last_name)
-        user = self._db.update(_schema, 'users', user_id, data)
+        user = self._repo.edit(_schema, 'users', user_id, data)
         return strip_sensitive(user)
 
     def set_phone_number(self, user_id, phone_number):
         data = dict(phone_number=phone_number)
-        user = self._db.update(_schema, 'users', user_id, data)
-        data = dict(
-            message='Welcome to mybnbaid!',
-            number=phone_number
+        user = self._repo.edit(_schema, 'users', user_id, data)
+        res = self._sms_rpc.send(
+            number=phone_number,
+            message='Welcome to mybnbaid!'
         )
-        res = self._send(b'sms', 'send', data)
         return strip_sensitive(user)
 
     def create_address(self, user_id, street, city, postcode, country):
@@ -67,7 +74,7 @@ class UsersService(rk.utils.BaseService):
             user_id=user_id, street=street, city=city,
             postcode=postcode, country=country
         )
-        address = self._db.create(_schema, 'addresses', data)
+        address = self._repo.put(_schema, 'addresses', data)
         return address
 
     def update_address(self, user_id, addr_id, street, city, postcode, country):
@@ -75,7 +82,7 @@ class UsersService(rk.utils.BaseService):
             street=street, city=city,
             postcode=postcode, country=country
         )
-        address = self._db.update(
+        address = self._repo.edit(
             _schema, 'addresses', addr_id, data
         )
         return address
@@ -83,63 +90,60 @@ class UsersService(rk.utils.BaseService):
     def list_address(self, user_id, limit=20, offset=0):
         params = (("user_id",), (user_id,))
         kwargs = dict(offset=offset, limit=limit)
-        addresses = self._db.filter(
+        addresses = self._repo.filter(
             _schema, 'addresses', params, **kwargs
         )
         return addresses
 
     def delete_address(self, user_id, addr_id):
-        self._db.delete(_schema, 'addresses', addr_id)
+        self._repo.drop(_schema, 'addresses', addr_id)
         return {}
 
     def delete_user(self, user_id):
         data = dict(disabled=True)
-        self._db.update(_schema, 'users', user_id, data)
+        self._repo.edit(_schema, 'users', user_id, data)
         return {}
 
     def login_user(self, email, password):
-        user = self.__find_by_email(email)
+        user = self._find_by_email(email)
         if not user:
             raise exc.UserNotFound('user does not exist')
-        user = _auth.login(user, password)
+        user = self._auth.login(user, password)
         return strip_sensitive(user)
 
     def request_verify_email(self, user_id):
-        user = self._db.get(_schema, 'users', user_id)
+        user = self._repo.get(_schema, 'users', user_id)
 
-        data = _auth.request_verify_email(_url, user_id, user['email'])
+        data = self._auth.request_verify_email(_url, user_id, user['email'])
         token = data.pop('token')
-        res = self._send(b'mail', 'send', data)
+        res = self._mail_rpc.send(**data)
         return dict(token=token)
 
     def set_email_verified(self, token):
-        data = _auth.verify_email(self._db, token)
+        data = self._auth.verify_email(self._repo, token)
         return data
 
     def request_password_reset(self, email):
-        user = self.__find_by_email(email)
+        user = self._find_by_email(email)
         if not user:
             raise exc.UserNotFound('user does not exist')
-        data = _auth.request_password_reset(_url, self._db, user['id'])
+        data = self._auth.request_password_reset(_url, self._repo, user['id'])
         token = data.pop('token')
-        res = self._send(b'mail', 'send', data)
+        res = self._mail_rpc.send(**data)
         return dict(token=token)
 
     def reset_password(self, token, password):
-        passed = _auth.reset_password(self._db, token, password)
+        passed = self._auth.reset_password(self._repo, token, password)
         return dict(passed=True)
 
     def get_phone_number(self, user_id):
-        user = self._db.get(_schema, 'users', user_id)
+        user = self._repo.get(_schema, 'users', user_id)
         return dict(phone_number=user.get('phone_number'))
 
 
 def main():
-    verbose = rk.utils.parse_config('verbose') == True
-    brokers = rk.utils.parse_config('brokers')
-    conf = rk.utils.parse_config('services')['users']
-    _auth.init()
-    with UsersService(brokers, conf, verbose) as service:
+    conf = rk.utils.parse_config()
+    with UsersService(conf) as service:
         service()
 
 

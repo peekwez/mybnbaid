@@ -1,0 +1,15 @@
+verbose: False
+stage: development
+broker: tcp://127.0.0.1:5555
+bucket: mybnbaid
+credentials: secrets/credentials.yml
+services:
+  - mail
+  - sms
+  - users
+  - zones
+  - properties
+  - bookings
+  - cleans
+gateway:
+  workers: 2

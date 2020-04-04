@@ -5,12 +5,12 @@ import rock as rk
 
 
 class UsersNoAuthHandler(base.BaseHandler):
-    _service = b'users'
+    _service = 'users'
 
 
 class UsersHandler(base.BaseAuthHandler):
-    _service = b'users'
+    _service = 'users'
 
 
 class ZonesHandler(base.BaseAuthHandler):
-    _service = b'zones'
+    _service = 'zones'
