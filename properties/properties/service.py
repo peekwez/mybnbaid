@@ -15,7 +15,7 @@ class PropertiesService(rk.svc.BaseService):
             broker, 'zones', verbose
         )
 
-    def _parse(self, user_id, street, city, postcode, country, bedrooms, washrooms, size):
+    def _property(self, user_id, street, city, postcode, country, bedrooms, washrooms, size):
         zone = self._zones_rpc.get_region(
             user_id=user_id, fsa=postcode[:3]
         )
@@ -27,13 +27,17 @@ class PropertiesService(rk.svc.BaseService):
         )
         return data
 
-    def add_property(self, user_id, **kwargs):
-        data = self._parse(user_id, **kwargs)
+    def add_property(self, user_id, street, city, postcode, country, bedrooms, washrooms, size):
+        data = self._property(
+            user_id, street, city, postcode, country, bedrooms, washrooms, size
+        )
         prop = self._repo.put(_schema, 'properties', data)
         return prop
 
-    def update_property(self, user_id, property_id, **kwargs):
-        data = self._parse(user_id, **kwargs)
+    def update_property(self, user_id, property_id, street, city, postcode, country, bedrooms, washrooms, size):
+        data = self._property(
+            user_id, street, city, postcode, country, bedrooms, washrooms, size
+        )
         prop = self._repo.edit(_schema, 'properties', property_id, data)
         return prop
 
@@ -53,8 +57,8 @@ class PropertiesService(rk.svc.BaseService):
 
 
 def main():
-    cfg = rk.utils.parse_config()
-    with PropertiesService(cfg) as service:
+    conf = rk.utils.parse_config()
+    with PropertiesService(conf) as service:
         service()
 
 

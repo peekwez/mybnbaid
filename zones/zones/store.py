@@ -102,4 +102,4 @@ class ZonesStore(object):
         return {'items': data}
 
 
-memdata = ZoneStore()
+memdata = ZonesStore()

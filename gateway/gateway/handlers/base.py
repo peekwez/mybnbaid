@@ -55,9 +55,7 @@ class BaseHandler(web.RequestHandler):
 
 
 class BaseAuthHandler(BaseHandler):
-    _token = rk.auth.TokenManager(
-        {'LOGIN': rk.aws.get_token_secrets()['LOGIN']}
-    )
+    _auth = None
 
     def prepare(self):
         super(BaseAuthHandler, self).prepare()
@@ -70,7 +68,9 @@ class BaseAuthHandler(BaseHandler):
                 'details': 'request token is missing'
             })
         try:
-            user_id = self._token.verify('LOGIN', token, ttl=28800)
+            user_id = self._auth.verify_token(
+                'login-user', token, ttl=28800
+            )
             self.data.update({'user_id': user_id})
         except Exception as err:
             self._on_complete(rk.utils.error(err))

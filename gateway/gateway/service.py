@@ -5,23 +5,30 @@ from tornado.log import enable_pretty_logging
 
 import rock as rk
 
-from .handlers.clients import (
-    UsersHandler, UsersNoAuthHandler,
-    ZonesHandler
-)
+from .handlers import clients as hd
+
 
 enable_pretty_logging()
 
 
-def initialize(broker, handlers, verbose):
-    # inject asynchronous RpcProxy for services
+def initialize(conf, handlers):
+    # inject asynchronous RpcProxy and auth for services
+    _sas = rk.sas.AWSProvider(conf['credentials'], conf['stage'])
+    _conf = _sas.get_service_secret('gateway', conf['bucket'])
     for _, handler in handlers:
         try:
             service = handler._service
             if handler._rpc_client == None:
+                # inject service clients
                 handler._rpc_client = rk.rpc.AsyncRpcProxy(
-                    broker, handler._service, verbose
+                    conf['broker'], handler._service, conf['verbose']
                 )
+
+                # check for auth and start manager
+                if hasattr(handler, '_auth'):
+                    handler._auth = rk.utils.AuthManager(
+                        _conf['authentication']
+                    )
         except AttributeError:
             pass
 
@@ -43,29 +50,33 @@ def main():
     conf = rk.utils.read_config(opts.config)
 
     handlers = [
-        (r'/users.create', UsersNoAuthHandler),
-        (r'/users.auth.login', UsersNoAuthHandler),
-        (r'/users.auth.setEmailVerified', UsersNoAuthHandler),
-        (r'/users.auth.requestPasswordReset', UsersNoAuthHandler),
-        (r'/users.auth.setPassword', UsersNoAuthHandler),
-        (r'/users.auth.requestVerifyEmail', UsersHandler),
-        (r'/users.setName', UsersHandler),
-        (r'/users.setPhoneNumber', UsersHandler),
-        (r'/users.address.create', UsersHandler),
-        (r'/users.address.update', UsersHandler),
-        (r'/users.address.list', UsersHandler),
-        (r'/users.address.delete', UsersHandler),
-        (r'/zones.getLocation', ZonesHandler),
-        (r'/zones.getCity', ZonesHandler),
-        (r'/zones.getRegion', ZonesHandler),
-        (r'/zones.locations', ZonesHandler),
-        (r'/zones.cities', ZonesHandler),
-        (r'/zones.regions', ZonesHandler)
+        (r'/users.info', hd.UsersNoAuthHandler),
+        (r'/users.create', hd.UsersNoAuthHandler),
+        (r'/users.auth.login', hd.UsersNoAuthHandler),
+        (r'/users.auth.setEmailVerified', hd.UsersNoAuthHandler),
+        (r'/users.auth.requestPasswordReset', hd.UsersNoAuthHandler),
+        (r'/users.auth.setPassword', hd.UsersNoAuthHandler),
+        (r'/users.auth.requestVerifyEmail', hd.UsersHandler),
+        (r'/users.setName', hd.UsersHandler),
+        (r'/users.setPhoneNumber', hd.UsersHandler),
+        (r'/users.address.create', hd.UsersHandler),
+        (r'/users.address.update', hd.UsersHandler),
+        (r'/users.address.list', hd.UsersHandler),
+        (r'/users.address.delete', hd.UsersHandler),
+        (r'/zones.info', hd.ZonesNoAuthHandler),
+        (r'/zones.getLocation', hd.ZonesHandler),
+        (r'/zones.getCity', hd.ZonesHandler),
+        (r'/zones.getRegion', hd.ZonesHandler),
+        (r'/zones.locations', hd.ZonesHandler),
+        (r'/zones.cities', hd.ZonesHandler),
+        (r'/zones.regions', hd.ZonesHandler),
+        (r'/properties.info', hd.PropertiesNoAuthHandler),
+        (r'/bookings.info', hd.BookingsNoAuthHandler),
+        (r'/cleans.info', hd.CleansNoAuthHandler),
     ]
 
     # initialize clients
-    verbose = conf.get('verbose', None)
-    initialize(conf['broker'], handlers, verbose == True)
+    initialize(conf, handlers)
 
     # initialize and run app
     app = web.Application(handlers)
