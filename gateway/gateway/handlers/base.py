@@ -7,8 +7,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 import rock as rk
 
-from . import mapping
-
 MAX_WORKERS = 4
 
 
