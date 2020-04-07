@@ -1,4 +1,5 @@
 import tornado
+import signal
 from tornado import ioloop
 from tornado import web
 from tornado.log import enable_pretty_logging
@@ -11,6 +12,7 @@ enable_pretty_logging()
 
 
 def main():
+
     from argparse import ArgumentParser
     parser = ArgumentParser()
 
@@ -32,13 +34,19 @@ def main():
     # get handlers
     handlers = hd.factory(conf)
 
+    # register function to cleanup after sig termination
+    def cleanup(*args, **kwargs): return hd.cleanup(handlers)
+    signal.signal(signal.SIGTERM, cleanup)
+
     # initialize and run app
     app = web.Application(handlers)
     app.listen(opts.port)
     try:
         ioloop.IOLoop.current().start()
     except:
-        print('Interrupted')
+        print('Interrupted...')
+    finally:
+        cleanup()
 
 
 if __name__ == "__main__":

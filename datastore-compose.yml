@@ -1,0 +1,25 @@
+version: "3.1"
+services:  
+  schemaless:
+    container_name: schemaless
+    image: postgres
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+    restart: always
+
+  memstore:
+    container_name: memstore
+    image: memcached
+    ports:
+      - 11212:11211
+    restart: always
+
+  redstore:
+    container_name: redstore
+    image: redis
+    ports:
+      - 6380:6379
+    restart: always

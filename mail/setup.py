@@ -11,14 +11,12 @@ setup(
     },
     install_requires=[
         'rock==0.0.1',
-        'pyzmq==18.1.0',
-        'tornado==6.0.3'
     ],
     extras_require={
         'dev': [
-            'pytest==3.1.1',
-            'coverage==4.4.1',
-            'flake8==3.3.0'
+            'pytest>=3.1.1',
+            'coverage>=4.4.1',
+            'flake8>=3.3.0'
         ]
     },
     zip_safe=True

@@ -5,42 +5,58 @@ from . import zones
 from . import properties
 from . import bookings
 from . import cleans
-
-
-def get_auth_config(conf):
-    _sas = rk.sas.AWSProvider(conf['credentials'], conf['stage'])
-    _conf = _sas.get_service_secret('gateway', conf['bucket'])
-    return _conf['authentication']
+from . import base
 
 
 def factory(conf):
     # combine all handlers
     handlers = [
-        *users.handlers,
+        (r'/logout', base.LogoutHandler, dict(rpc=None)),
+        * users.handlers,
         *zones.handlers,
         *properties.handlers,
         *bookings.handlers,
         *cleans.handlers
     ]
 
-    # get authentication configuration
-    auth_conf = get_auth_config(conf)
+    # get service configuration
+    sas = rk.sas.AWSProvider(conf['credentials'], conf['stage'])
+    sconf = sas.get_service_secret('gateway', conf['bucket'])
 
     # initialize asynchronous clients to service
-    for _, handler, _ in handlers:
+    for _, handler, _ in handlers:  # url, handler, rpc
         try:
             service = handler._service
+
+            # initialize asynchronous clients for rpc services
             if handler._rpc_client == None:
                 handler._rpc_client = rk.rpc.AsyncRpcProxy(
-                    conf['broker'], handler._service, conf['verbose']
+                    conf['broker'], service, conf['verbose']
                 )
 
+            # initialize token authentication manager
             if handler._auth_manager == None:
-                handler._auth_manager = rk.utils.AuthManager(auth_conf)
+                handler._auth_manager = rk.utils.AuthManager(
+                    sconf['authentication']
+                )
+
+            # initialize repository for managing sessions
+            if handler._repo == None:
+                handler._repo = rk.repo.layers.SchemalessLayer(
+                    'gateway', sconf['repository']
+                )
         except AttributeError:
             pass
 
     return handlers
 
 
-__all__ = ['factory']
+def cleanup(handlers):
+    # close connections to repository
+    for _, handler, _ in handlers:
+        if handler._repo is not None:
+            handler._repo.close()
+            handler._repo = None
+
+
+__all__ = ['factory', 'cleanup']

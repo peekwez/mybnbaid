@@ -7,8 +7,10 @@ class UsersHandler(base.BaseHandler):
 
 handlers = [
     (r'/users.info', UsersHandler, dict(rpc='info', auth=False)),
-    (r'/users.create', UsersHandler, dict(rpc='create_user', auth=False)),
-    (r'/users.auth.login', UsersHandler, dict(rpc='login_user', auth=False)),
+    (r'/users.create', UsersHandler,
+     dict(rpc='create_user', auth=False, init_session=True)),
+    (r'/users.auth.login', UsersHandler,
+     dict(rpc='login_user', auth=False, init_session=True)),
     (r'/users.auth.requestPasswordReset', UsersHandler,
      dict(rpc='request_password_reset', auth=False)),
     (r'/users.auth.setPassword', UsersHandler,
