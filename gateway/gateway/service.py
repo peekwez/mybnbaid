@@ -4,7 +4,7 @@ from tornado import ioloop
 from tornado import web
 from tornado.log import enable_pretty_logging
 
-import rock as rk
+import backless as bk
 from . import handlers as hd
 
 
@@ -29,7 +29,7 @@ def main():
     opts = parser.parse_args()
 
     # read config file
-    conf = rk.utils.read_config(opts.config)
+    conf = bk.utils.read_config(opts.config)
 
     # get handlers
     handlers = hd.factory(conf)

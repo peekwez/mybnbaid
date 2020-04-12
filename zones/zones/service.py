@@ -1,9 +1,7 @@
-import rock as rk
+import backless as bk
 
 from . import exceptions as exc
 from . import store as store
-
-_schema = 'zones'
 
 MAX_WORKERS = 2
 
@@ -13,11 +11,12 @@ def strip_arn(zone, fields=('subscription_arn',)):
     return zone
 
 
-class Tasks(rk.svc.BaseTasks):
-    def __init__(self, sns, topics, repo):
+class Tasks(bk.svc.BaseTasks):
+    def __init__(self, sns, topics, repo, schema):
         self._sns = sns
         self._topics = topics
         self._repo = repo
+        self._schema = schema
 
     def subscribe_number(self, data):
         name = data['topic'].replace(' ', '')
@@ -26,13 +25,13 @@ class Tasks(rk.svc.BaseTasks):
             Endpoint=data['number'],
             Protocol='sms'
         )
-        code, arn = rk.utils.parse_response(
+        code, arn = bk.utils.parse_response(
             response, extras=['SubscriptionArn']
         )
         if code == 200 and arn:
             data = {'subscription_arn': arn}
             zone = self._repo.edit(
-                _schema, 'zones', data['zone_id'], data
+                self._schema, 'zones', data['zone_id'], data
             )
 
     def unsubscribe_number(self, data):
@@ -41,9 +40,10 @@ class Tasks(rk.svc.BaseTasks):
         )
 
 
-class ZonesService(rk.svc.BaseService):
+class ZonesService(bk.svc.BaseService):
     _name = 'zones'
     _version = '0.0.1'
+    _schema = 'zones'
     _users_rpc = None
 
     def __init__(self, conf):
@@ -51,7 +51,7 @@ class ZonesService(rk.svc.BaseService):
         sns, topics = self._sas.get_client('sns', region='us-east-1')
         self._update_topics(sns, topics)
         self._setup_tasks(
-            Tasks(sns, topics, self._repo),
+            Tasks(sns, topics, self._repo, self._schema),
             MAX_WORKERS,
         )
 
@@ -60,7 +60,7 @@ class ZonesService(rk.svc.BaseService):
         super(ZonesService, self).__exit__(type, value, traceback)
 
     def _setup_clients(self, broker, verbose):
-        self._users_rpc = rk.rpc.RpcProxy(
+        self._users_rpc = bk.rpc.RpcProxy(
             broker, 'users', verbose
         )
 
@@ -94,7 +94,7 @@ class ZonesService(rk.svc.BaseService):
             raise ZoneError('phone number required to add zones')
 
         data = dict(user_id=user_id, name=region)
-        zone = self._repo.put(_schema, 'zones', data)
+        zone = self._repo.put(self._schema, 'zones', data)
         data = dict(
             topic=region, number=user['phone_number'],
             zone_id=zone['id']
@@ -103,24 +103,24 @@ class ZonesService(rk.svc.BaseService):
         return zone
 
     def get_zone(self, user_id, zone_id):
-        zone = self._repo.get(_schema, 'zones', zone_id)
+        zone = self._repo.get(self._schema, 'zones', zone_id)
         return strip_arn(zone)
 
     def list_zones(self, user_id, limit=20, offset=0):
         params = (('user_id',), (user_id,))
         kwargs = dict(offset=offset, limit=limit)
-        zones = self._repo.filter(_schema, 'zones', params, **kwargs)
+        zones = self._repo.filter(self._schema, 'zones', params, **kwargs)
         items = [strip_arn(zone) for zone in zones['items']]
         zones['items'] = items
         return zones
 
     def delete_zone(self, user_id, zone_id):
-        zone = self._repo.get(_schema, 'zones', zone_id)
+        zone = self._repo.get(self._schema, 'zones', zone_id)
         arn = zone.get('subscription_arn', None)
         if arn:
             data = dict(arn=arn)
             res = self._emit('unsubscribe:number', data)
-        self._repo.drop(_schema, 'zones', zone_id)
+        self._repo.drop(self._schema, 'zones', zone_id)
         return {}
 
     def get_location(self, user_id, fsa):
@@ -143,7 +143,7 @@ class ZonesService(rk.svc.BaseService):
 
 
 def main():
-    conf = rk.utils.parse_config()
+    conf = bk.utils.parse_config()
     with ZonesService(conf) as service:
         service()
 

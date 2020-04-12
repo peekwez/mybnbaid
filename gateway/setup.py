@@ -10,7 +10,7 @@ setup(
         'console_scripts': ['mybnbaid.gateway=gateway.service:main']
     },
     install_requires=[
-        'rock==0.0.1',
+        'backless==0.0.1',
         'tornado>=6.0.3',
     ],
     include_package_data=True,

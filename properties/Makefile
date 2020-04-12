@@ -1,7 +1,3 @@
-db = schemaless -d properties
-sc = -s properties
-cmd = -c create
-
 run-wheel-builder:
 	docker run --rm \
 	-v "$$(pwd)":/application \

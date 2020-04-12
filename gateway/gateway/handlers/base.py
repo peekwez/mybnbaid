@@ -4,7 +4,7 @@ from tornado import gen, web, log
 from tornado.concurrent import run_on_executor
 from concurrent.futures import ThreadPoolExecutor
 
-import rock as rk
+import backless as bk
 
 MAX_WORKERS = 4
 CONTENT_TYPE = 'application/json'
@@ -37,7 +37,7 @@ class BaseHandler(web.RequestHandler):
             if self._auth:
                 self._authenticate()
         except Exception as err:
-            self._on_complete(rk.utils.error(err))
+            self._on_complete(bk.utils.error(err))
 
     @gen.coroutine
     def post(self):

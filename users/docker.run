@@ -9,7 +9,7 @@ RUN chmod +x /var/mybnbaid/run.sh
 WORKDIR /var/mybnbaid/
 
 RUN . /appenv/bin/activate; \
-    pip install --no-index -f wheelhouse rock schemaless mybnbaid_users
+    pip install --no-index -f wheelhouse backless mybnbaid_users
 
 CMD . /appenv/bin/activate; \
     /var/mybnbaid/run.sh;

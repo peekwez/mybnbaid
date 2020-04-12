@@ -21,6 +21,6 @@ CMD . /appenv/bin/activate; \
            pip3 wheel . ; \
            cd /dependencies/schemaless; \
            pip3 wheel . ; \
-           cd /dependencies/rock; \
+           cd /dependencies/backless; \
            pip3 wheel .
 

@@ -10,7 +10,7 @@ setup(
         'console_scripts': ['mybnbaid.cleans=cleans.service:main']
     },
     install_requires=[
-        'rock==0.0.1',
+        'backless==0.0.1',
     ],
     include_package_data=True,
     extras_require={

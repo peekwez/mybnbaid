@@ -1,4 +1,4 @@
-import rock as rk
+import backless as bk
 
 from . import users
 from . import zones
@@ -20,7 +20,7 @@ def factory(conf):
     ]
 
     # get service configuration
-    sas = rk.sas.AWSProvider(conf['credentials'], conf['stage'])
+    sas = bk.sas.AWSProvider(conf['credentials'], conf['stage'])
     sconf = sas.get_service_secret('gateway', conf['bucket'])
 
     # initialize asynchronous clients to service
@@ -30,19 +30,19 @@ def factory(conf):
 
             # initialize asynchronous clients for rpc services
             if handler._rpc_client == None:
-                handler._rpc_client = rk.rpc.AsyncRpcProxy(
+                handler._rpc_client = bk.rpc.AsyncRpcProxy(
                     conf['broker'], service, conf['verbose']
                 )
 
             # initialize token authentication manager
             if handler._auth_manager == None:
-                handler._auth_manager = rk.utils.AuthManager(
+                handler._auth_manager = bk.utils.AuthManager(
                     sconf['authentication']
                 )
 
             # initialize repository for managing sessions
             if handler._repo == None:
-                handler._repo = rk.repo.layers.SchemalessLayer(
+                handler._repo = bk.repo.layers.SchemalessLayer(
                     'gateway', sconf['repository']
                 )
         except AttributeError:

@@ -1,7 +1,3 @@
-db = schemaless -d bookings
-sc = -s bookings
-cmd = -c create
-
 run-wheel-builder:
 	docker run --rm \
 	-v "$$(pwd)":/application \

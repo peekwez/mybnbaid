@@ -10,7 +10,7 @@ setup(
         'console_scripts': ['mybnbaid.zones=zones.service:main']
     },
     install_requires=[
-        'rock==0.0.1',
+        'backless==0.0.1',
     ],
     package_data={'zones': ['*.csv']},
     extras_require={

@@ -10,7 +10,7 @@ setup(
         'console_scripts': ['mybnbaid.mail=mail.service:main']
     },
     install_requires=[
-        'rock==0.0.1',
+        'backless==0.0.1',
     ],
     extras_require={
         'dev': [

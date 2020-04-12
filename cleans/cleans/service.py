@@ -1,15 +1,16 @@
-import rock as rk
+import backless as bk
 
 from . import exceptions as exc
 
 
-class CleansService(rk.svc.BaseService):
+class CleansService(bk.svc.BaseService):
     _name = 'cleans'
     _version = '0.0.1'
 
     def _check_owner(self, user, user_id, zone, clean_id):
         clean = self._repo.get(zone, 'cleans', clean_id)
-        if clean[f'{user}_id'] != user_id:
+        key = f'{user}_id'
+        if clean[key] != user_id:
             raise exc.NotOwner('user cannot modify this resource')
         return clean
 
@@ -48,9 +49,7 @@ class CleansService(rk.svc.BaseService):
 
 
 def main():
-    cfg = rk.utils.parse_config()
-    with CleansService(cfg) as service:
-        service()
+    bk.utils.start_service(CleansService)
 
 
 if __name__ == "__main__":

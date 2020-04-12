@@ -13,7 +13,7 @@ setup(
 
     },
     install_requires=[
-        'rock==0.0.1',
+        'backless==0.0.1',
     ],
     package_data={'users': ['emails/*.txt', 'emails/*.html']},
     extras_require={

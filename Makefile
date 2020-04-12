@@ -6,7 +6,7 @@ export
 # service variables
 SERVICE_NAME ?=xyz
 SERVICES ?=mail sms users zones properties bookings cleans gateway
-LOCAL_LIBS ?=schemaless rock
+LOCAL_LIBS ?=schemaless backless
 
 # AWS secrets manager variables
 GET_SECRET =aws secretsmanager get-secret-value --secret-id
@@ -31,25 +31,31 @@ push: push-images
 
 persistence:
 	$(call _info, starting persistence layers)
-	docker-compose -f test-compose.yml rm -f schemaless memstore redstore
-	docker-compose -f test-compose.yml stop schemaless memstore redstore
-	docker-compose -f test-compose.yml up -d --remove-orphans schemaless memstore redstore
+	docker-compose -f datastore-compose.yml rm -f schemaless memstore redstore
+	docker-compose -f datastore-compose.yml stop schemaless memstore redstore
+	docker-compose -f datastore-compose.yml up -d --remove-orphans schemaless memstore redstore
 
-install: libs
+install: deps
 	$(call _info, installing project services)
 	for service in $(SERVICES); \
 	do make -C $$service install-service; \
 	done
 
-libs:
+deps:
 	$(call _info, installing project dependencies)
 	for lib in $(LOCAL_LIBS); \
 	do make -C dependencies/$$lib install; \
 	done
 
+libs:
+	$(call _info, installing project dependencies)
+	for lib in $(LOCAL_LIBS); \
+	do pip install git+ssh://git@github.com/peekwez/$$lib.git; \
+	done
+
 supervisor:
 	$(call _info, creating supervisor configuration for services)
-	rock.supervisor -c config.yml
+	backless process -c config.yml
 
 start: install logs supervisor
 	$(call _info, starting service processes)
@@ -92,7 +98,7 @@ logs:
 
 init-db:
 	$(call _info, initializing service databases)
-	rock.syncdb -c datastore.yml
+	backless syncdb -c datastore.yml
 
 check-table: secrets
 	$(call _info, checking table $(SCHEMA).$(TABLE) for $(DB) database)
@@ -127,7 +133,7 @@ upload-secrets:
 
 create-service:
 	$(call _info, initializing a service template)
-	rock.service -d $(ROOT) -s $(SERVICE_NAME)
+	backless template -d $(ROOT) -s $(SERVICE_NAME)
 	chmod a+x $(ROOT)/$(SERVICE_NAME)/run.sh
 	git add $(SERVICE_NAME)/*
 

@@ -10,7 +10,7 @@ setup(
         'console_scripts': ['mybnbaid.bookings=bookings.service:main']
     },
     install_requires=[
-        'rock==0.0.1',
+        'backless==0.0.1',
         'arrow>=0.15.2'
     ],
     include_package_data=True,

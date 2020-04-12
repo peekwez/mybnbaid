@@ -1,15 +1,12 @@
 import arrow
 
-import rock as rk
+import backless as bk
 
 from . import exceptions as exc
 from . import text as txt
 
 
-MAX_WORKERS = 2
-
-
-class BookingsService(rk.svc.BaseService):
+class BookingsService(bk.svc.BaseService):
     _name = 'bookings'
     _version = '0.0.1'
     _users_rpc = None
@@ -18,10 +15,10 @@ class BookingsService(rk.svc.BaseService):
     _cleans_rpc = None
 
     def _setup_clients(self, broker, verbose):
-        self._users_rpc = rk.rpc.RpcProxy(broker, 'users', verbose)
-        self._sms_rpc = rk.rpc.RpcProxy(broker, 'sms', verbose)
-        self._properties_rpc = rk.rpc.RpcProxy(broker, 'properties', verbose)
-        self._cleans_rpc = rk.rpc.RpcProxy(broker, 'cleans', verbose)
+        self._users_rpc = bk.rpc.RpcProxy(broker, 'users', verbose)
+        self._sms_rpc = bk.rpc.RpcProxy(broker, 'sms', verbose)
+        self._properties_rpc = bk.rpc.RpcProxy(broker, 'properties', verbose)
+        self._cleans_rpc = bk.rpc.RpcProxy(broker, 'cleans', verbose)
 
     def _send_sms(self, user, clean, template):
         if user == 'host':
@@ -38,8 +35,9 @@ class BookingsService(rk.svc.BaseService):
         )
 
     def _check_owner(self, user, user_id, zone, clean_id):
-        clean = self._db.get(zone, 'bookings', clean_id)
-        if clean[f'{user}_id'] != user_id:
+        clean = self._repo.get(zone, 'bookings', clean_id)
+        key = f'{user}_id'
+        if clean[key] != user_id:
             raise exc.NotOwner('user cannot modify this resource')
         return clean
 
@@ -130,9 +128,7 @@ class BookingsService(rk.svc.BaseService):
 
 
 def main():
-    conf = rk.utils.parse_config()
-    with BookingsService(conf) as service:
-        service()
+    bk.utils.start_service(BookingsService)
 
 
 if __name__ == "__main__":
