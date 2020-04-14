@@ -107,7 +107,7 @@ class ZonesService(bk.svc.BaseService):
         return strip_arn(zone)
 
     def list_zones(self, user_id, limit=20, offset=0):
-        params = (('user_id',), (user_id,))
+        params = dict(user_id=user_id)
         kwargs = dict(offset=offset, limit=limit)
         zones = self._repo.filter(self._schema, 'zones', params, **kwargs)
         items = [strip_arn(zone) for zone in zones['items']]

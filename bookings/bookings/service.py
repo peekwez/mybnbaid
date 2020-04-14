@@ -109,19 +109,19 @@ class BookingsService(bk.svc.BaseService):
     def get_zone_cleans(self, user_id, zone, limit=20, offset=0):
         # add a filter indicator for week availability
         # and hour and minute
+        params = dict(aid_id=0)
         kwargs = dict(offset=offset, limit=limit)
-        params = (('aid_id',), (0,))
         cleans = self._db.filter(zone, 'bookings', params, **kwargs)
         return cleans
 
     def get_aid_cleans(self, user_id, zone, limit=20, offset=0):
-        params = (('aid_id',), (user_id,))
+        params = dict(aid_id=user_id)
         kwargs = dict(offset=offset, limit=limit)
         cleans = self._repo.filter(zone, 'bookings', params, **kwargs)
         return cleans
 
     def get_property_cleans(self, user_id, zone, property_id, limit=20, offset=0):
-        params = (('property_id',), (property_id,))
+        params = dict(property_id=property_id)
         kwargs = dict(offset=offset, limit=limit)
         cleans = self._repo.filter(zone, 'bookings', params, **kwargs)
         return cleans

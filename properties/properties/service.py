@@ -45,7 +45,7 @@ class PropertiesService(bk.svc.BaseService):
         return prop
 
     def list_properties(self, user_id, limit=20, offset=0):
-        params = (('user_id',), (user_id,))
+        params = dict(user_id=user_id)
         kwargs = dict(offset=offset, limit=limit)
         props = self._repo.filter(self._schema, 'properties', params)
         return props

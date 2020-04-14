@@ -36,13 +36,13 @@ class CleansService(bk.svc.BaseService):
         return clean
 
     def get_property_cleans(self, user_id, zone, property_id, limit=20, offset=0):
-        params = (('property_id',), (property_id,))
+        params = dict(property_id=property_id)
         kwargs = dict(offset=offset, limit=limit)
         cleans = self._repo.filter(zone, 'cleans', params, **kwargs)
         return cleans
 
     def get_aid_cleans(self, user_id, zone, limit=20, offset=0):
-        params = (('aid_id',), (user_id,))
+        params = dict(aid_id=user_id)
         kwargs = dict(offset=offset, limit=limit)
         cleans = self._repo.filter(zone, 'cleans', params, **kwargs)
         return cleans
